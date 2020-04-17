@@ -1,7 +1,3 @@
-"""
-Manager service definitions
-"""
-
 import logging
 
 import minknow.rpc.manager_pb2
@@ -41,9 +37,7 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     """
     Manager service
     """
-
-    def map_to_server(self, server):
-        minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server(self, server)
+    server_adder = minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server
 
     def flow_cell_positions(self, request, context) -> iter:
         """

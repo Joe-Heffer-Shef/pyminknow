@@ -1,25 +1,22 @@
-"""
-Device service definitions
-"""
-
 import logging
-import random
 
+import service.mixins
 import minknow.rpc.device_pb2
 import minknow.rpc.device_pb2_grpc
 
 LOGGER = logging.getLogger(__name__)
 
 
-class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
+class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer, service.mixins.ServiceMixin):
     """
     Device service
     """
+    server_adder = minknow.rpc.device_pb2_grpc.add_DeviceServiceServicer_to_server
 
-    def map_to_server(self, server):
-        minknow.rpc.device_pb2_grpc.add_DeviceServiceServicer_to_server(self, server)
+    possible_states = {'DEVICE_READY', 'DEVICE_DISCONNECTED'}
 
     def get_device_state(self, request, context):
-        possible_states = ('DEVICE_READY', 'DEVICE_DISCONNECTED')
-        device_state = random.choice(possible_states)
+        # Pick a random state
+        device_state = self.possible_states.pop()
+
         return minknow.rpc.device_pb2.GetDeviceStateResponse(device_state=device_state)

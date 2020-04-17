@@ -61,6 +61,10 @@ def get_device_state(stub):
     return state
 
 
+def get_run_info_by_id(run_id):
+    return
+
+
 def run(stub):
     print(get_device_state(stub))
 
