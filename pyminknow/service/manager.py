@@ -1,14 +1,18 @@
 """
-Service definitions
+Manager service definitions
 """
+
+import logging
 
 import minknow.rpc.manager_pb2
 import minknow.rpc.manager_pb2_grpc
 
+LOGGER = logging.getLogger(__name__)
+
 
 class Location(minknow.rpc.manager_pb2.FlowCellPosition.Location):
     """
-    Flow Cell Position
+    Flow cell physical location
 
     x = The column (counting from 0, left-to-right) of the flow cell position
         on the sequencing unit when viewed from above/in front.
@@ -20,20 +24,26 @@ class Location(minknow.rpc.manager_pb2.FlowCellPosition.Location):
 
 
 class RpcPorts(minknow.rpc.manager_pb2.FlowCellPosition.RpcPorts):
+    """
+    RPC ports
+    """
     pass
 
 
 class FlowCellPosition(minknow.rpc.manager_pb2.FlowCellPosition):
     """
-    Flow Cell Position
+    Flow cell position
     """
     pass
 
 
-class ManagerServiceServicer(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
+class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
+    """
+    Manager service
+    """
 
     def map_to_server(self, server):
-        return minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server(self, server)
+        minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server(self, server)
 
     def flow_cell_positions(self, request, context) -> iter:
         """

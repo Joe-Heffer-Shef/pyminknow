@@ -8,7 +8,7 @@ import concurrent.futures
 
 import grpc
 
-import service
+import service.device
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ TODO
 """
 
 DEFAULT_PORT = 50051
+SHUTDOWN_GRACE_PERIOD = 5  # seconds
 
 
 def get_args():
@@ -33,16 +34,25 @@ def get_args():
 
 
 def serve(port: int):
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
-    server = grpc.server(executor)
+    thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+    server = grpc.server(thread_pool)
 
-    servicer = service.ManagerServiceServicer()
+    servicer = service.device.DeviceService()
 
     servicer.map_to_server(server)
 
     server.add_insecure_port('[::]:{port}'.format(port=port))
 
-    server.start()
+    LOGGER.info("Starting service...")
+
+    try:
+        server.start()
+        server.wait_for_termination()
+    except KeyboardInterrupt:
+        LOGGER.info('Stopping server...')
+        server.stop(grace=SHUTDOWN_GRACE_PERIOD)
+
+    LOGGER.info("Server stopped.")
 
 
 def main():
