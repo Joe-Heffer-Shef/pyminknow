@@ -60,10 +60,9 @@ def serve(port: int, grace: float):
         servicer.add_to_server(server)
         LOGGER.info('Registered %s', Service.__name__)
 
-    LOGGER.info("Starting service (listening on port %s)...", port)
-
     try:
         server.start()
+        LOGGER.info("Listening on port %s", port)
         server.wait_for_termination()
     except KeyboardInterrupt:
         LOGGER.info('Stopping server...')
@@ -72,9 +71,14 @@ def serve(port: int, grace: float):
     LOGGER.info("Server stopped.")
 
 
+def configure_logging(verbose: bool = False):
+    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
+    logging.captureWarnings(capture=True)
+
+
 def main():
     args = get_args()
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    configure_logging(verbose=args.verbose)
 
     serve(port=args.port, grace=args.grace)
 

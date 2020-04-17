@@ -1,4 +1,6 @@
 import logging
+import warnings
+import random
 
 import minknow.rpc.manager_pb2
 import minknow.rpc.manager_pb2_grpc
@@ -13,6 +15,8 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     add_to_server = minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server
 
     def list_devices(self, request, context):
+        warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
+
         return minknow.rpc.manager_pb2.ListDevicesResponse(
             inactive=['MN0001', 'MN0002'],
             pending=['MN0003'],
@@ -34,14 +38,15 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
         Provides a snapshot of places where users can insert flow cells.
         """
 
-        LOGGER.debug(context)
-        LOGGER.debug(request)
+        # Get random state
+        possible_states = minknow.rpc.manager_pb2.FlowCellPosition.State.keys()
+        state = random.choice(possible_states)
 
         flow_cell_positions = [
             minknow.rpc.manager_pb2.FlowCellPosition(
-                name='My test machine',
-                location=minknow.rpc.manager_pb2.FlowCellPosition.Location(x=0, y=0),
-                state=minknow.rpc.manager_pb2.FlowCellPosition.State.STATE_RUNNING,
+                name='TEST000123',
+                location=minknow.rpc.manager_pb2.FlowCellPosition.Location(x=8, y=2),
+                state=state,
                 rpc_ports=minknow.rpc.manager_pb2.FlowCellPosition.RpcPorts(
                     secure=123,
                     insecure=456,
@@ -57,7 +62,7 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
         for flow_cell_position in flow_cell_positions:
             response = minknow.rpc.manager_pb2.FlowCellPositionsResponse(
                 total_count=total_count,
-                positions=flow_cell_position,
+                positions=[flow_cell_position],
             )
 
             yield response

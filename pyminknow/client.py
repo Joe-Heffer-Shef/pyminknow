@@ -4,6 +4,7 @@ Mock minKNOW gRPC client
 
 import argparse
 import logging
+import warnings
 
 import grpc
 
@@ -35,6 +36,8 @@ def get_args():
     parser.add_argument('-s', '--device_state', action='store_true', help='Get device state')
     parser.add_argument('-l', '--list_protocols', action='store_true', help='List available protocols')
     parser.add_argument('-d', '--list_devices', action='store_true', help='List available devices')
+    parser.add_argument('-f', '--flow_cell_positions', action='store_true',
+                        help='List all known positions where flow cells can be inserted')
 
     return parser, parser.parse_args()
 
@@ -89,10 +92,17 @@ class ManagerClient(RpcClient):
         raise NotImplementedError
 
     def list_devices(self):
+        warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
+
         request = minknow.rpc.manager_pb2.ListDevicesRequest()
         response = self.stub.list_devices(request)
 
         return response
+
+    def flow_cell_positions(self) -> iter:
+        request = minknow.rpc.manager_pb2.FlowCellPositionsRequest()
+        for response in self.stub.flow_cell_positions(request):
+            yield from response.positions
 
 
 class ProtocolClient(RpcClient):
@@ -121,9 +131,14 @@ class DeviceClient(RpcClient):
         return state
 
 
+def configure_logging(verbose: bool = False):
+    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
+    logging.captureWarnings(capture=True)
+
+
 def main():
     parser, args = get_args()
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    configure_logging(verbose=args.verbose)
 
     with connect(host=args.host, port=args.port) as channel:
 
@@ -137,13 +152,21 @@ def main():
             client = ProtocolClient(channel)
             print(client.list_protocols())
 
-        elif args.list_devices:
+        elif args.list_devices or args.flow_cell_positions:
             client = ManagerClient(channel)
-            devices = client.list_devices()
 
-            LOGGER.info("Found %s active devices", len(devices.active))
-            for device in devices.active:
-                print(device)
+            if args.list_devices:
+                devices = client.list_devices()
+                LOGGER.info("Found %s active devices", len(devices.active))
+                for device in devices.active:
+                    print(device)
+
+            elif args.flow_cell_positions:
+                for item in client.flow_cell_positions():
+                    print(item)
+
+            else:
+                raise ValueError('Unknown command')
 
         else:
             parser.print_help()
