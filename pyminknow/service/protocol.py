@@ -1,8 +1,11 @@
 import logging
 import uuid
+import random
+import datetime
 
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
+
 import config
 
 LOGGER = logging.getLogger(__name__)
@@ -14,9 +17,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     """
     add_to_server = minknow.rpc.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
 
-    @staticmethod
-    def make_run_id() -> str:
-        return uuid.uuid4().hex
+    runs = dict()
 
     def list_protocols(self, request, context):
         if request.force_reload:
@@ -39,28 +40,51 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         ]
 
     def get_run_info(self, request, context):
-        response = minknow.rpc.protocol_pb2.ProtocolRunInfo(
+        return minknow.rpc.protocol_pb2.ProtocolRunInfo(
             run_id=request.run_id,
-            protocol_id=None,
         )
 
-        return response
+    @classmethod
+    def make_run_id(cls) -> str:
+        return uuid.uuid4().hex
 
-    @staticmethod
-    def _start_protocol(identifier, *args):
-        LOGGER.info("Starting protocol %s (%s)", identifier, args)
+    @classmethod
+    def _start_protocol(cls, identifier, *args):
+        """Emulate a real process running"""
+        LOGGER.info("Starting protocol %s (Args: %s)", identifier, args)
+
+        run_id = cls.make_run_id()
+
+        LOGGER.info("Starting run ID: %s", run_id)
+
+        cls.runs[run_id] = dict(
+            protocol_id=identifier,
+            args=args,
+            output_path='/path/to/output',
+            # Pick a random state
+            state=random.choice(minknow.rpc.protocol_pb2.ProtocolState.keys()),
+            start_time=datetime.datetime.utcnow(),
+            end_time=None,
+        )
+
+        return run_id
 
     def start_protocol(self, request, context):
         LOGGER.info(request.user_info)
-        LOGGER.info("Group ID: %s", request.user_info.protocol_group_id)
+        LOGGER.info("Protocol group ID: %s", request.user_info.protocol_group_id)
         LOGGER.info("Sample ID: %s", request.user_info.sample_id)
 
-        self._start_protocol(identifier=request.identifier, *request.args)
+        run_id = self._start_protocol(identifier=request.identifier, *request.args)
 
-        run_id = self.make_run_id()
+        return minknow.rpc.protocol_pb2.StartProtocolResponse(run_id=run_id)
 
-        LOGGER.info("Run ID: %s", run_id)
+    def get_run_info(self, request, context):
+        run_id = request.run_id
 
-        response = minknow.rpc.protocol_pb2.StartProtocolResponse(run_id=run_id)
+        # If no run ID is provided, information about the most recently started protocol run is provided
+        if not run_id:
+            raise NotImplementedError
 
-        return response
+        run_info = self.runs[run_id]
+
+        return minknow.rpc.protocol_pb2.ProtocolRunInfo(**run_info)

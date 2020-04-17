@@ -88,16 +88,11 @@ class RpcClient:
 class ManagerClient(RpcClient):
     stub_name = 'manager'
 
-    def get_run_info_by_id(self, run_id):
-        raise NotImplementedError
-
     def list_devices(self):
         warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
 
         request = minknow.rpc.manager_pb2.ListDevicesRequest()
-        response = self.stub.list_devices(request)
-
-        return response
+        return self.stub.list_devices(request)
 
     def flow_cell_positions(self) -> iter:
         request = minknow.rpc.manager_pb2.FlowCellPositionsRequest()
@@ -110,9 +105,14 @@ class ProtocolClient(RpcClient):
 
     def list_protocols(self):
         request = minknow.rpc.protocol_pb2.ListProtocolsRequest()
-        response = self.stub.list_protocols(request)
+        return self.stub.list_protocols(request)
 
-        return response.protocols
+    def start_protocol(self, identifier: str, *args):
+        request = minknow.rpc.protocol_pb2.StartProtocolRequest(
+            identifier=identifier,
+            args=args,
+        )
+        return self.stub.start_protocol(request)
 
 
 class DeviceClient(RpcClient):
@@ -150,7 +150,8 @@ def main():
         # List protocols
         elif args.list_protocols:
             client = ProtocolClient(channel)
-            print(client.list_protocols())
+            for protocol in client.list_protocols().protocols:
+                print(protocol)
 
         elif args.list_devices or args.flow_cell_positions:
             client = ManagerClient(channel)
