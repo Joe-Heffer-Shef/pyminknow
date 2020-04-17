@@ -12,6 +12,23 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     """
     add_to_server = minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server
 
+    def list_devices(self, request, context):
+        return minknow.rpc.manager_pb2.ListDevicesResponse(
+            inactive=['MN0001', 'MN0002'],
+            pending=['MN0003'],
+            active=[
+                minknow.rpc.manager_pb2.ListDevicesResponse.ActiveDevice(
+                    name='MN0004',
+                    layout=minknow.rpc.manager_pb2.ListDevicesResponse.DeviceLayout(x=3, y=4),
+                    ports=minknow.rpc.manager_pb2.ListDevicesResponse.RpcPorts(
+                        secure=12411,
+                        insecure_grpc=24115,
+                        insecure_web=23432,
+                    )
+                )
+            ]
+        )
+
     def flow_cell_positions(self, request, context) -> iter:
         """
         Provides a snapshot of places where users can insert flow cells.
@@ -23,9 +40,9 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
         flow_cell_positions = [
             minknow.rpc.manager_pb2.FlowCellPosition(
                 name='My test machine',
-                location=self.Location(x=0, y=0),
+                location=minknow.rpc.manager_pb2.FlowCellPosition.Location(x=0, y=0),
                 state=minknow.rpc.manager_pb2.FlowCellPosition.State.STATE_RUNNING,
-                rpc_ports=self.RpcPorts(
+                rpc_ports=minknow.rpc.manager_pb2.FlowCellPosition.RpcPorts(
                     secure=123,
                     insecure=456,
                     secure_grpc_web=543,
