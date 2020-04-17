@@ -1,0 +1,6 @@
+name: minknow
+channels:
+  - defaults
+dependencies:
+  - grpcio=1.27
+  - protobuf=3.11
