@@ -3,6 +3,7 @@ import uuid
 
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
+import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -11,11 +12,31 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     """
     Protocol service
     """
-    server_adder = minknow.rpc.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
+    add_to_server = minknow.rpc.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
 
     @staticmethod
     def make_run_id() -> str:
         return uuid.uuid4().hex
+
+    def list_protocols(self, request, context):
+        if request.force_reload:
+            self.clear_protocol_cache()
+
+        protocols = self.build_protocols()
+
+        return minknow.rpc.protocol_pb2.ListProtocolsResponse(protocols=protocols)
+
+    def clear_protocol_cache(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def build_protocols() -> list:
+        return [
+            minknow.rpc.protocol_pb2.ProtocolInfo(
+                identifier=protocol_name,
+                name=protocol_name,
+            ) for protocol_name in config.PROTOCOLS
+        ]
 
     def get_run_info(self, request, context):
         response = minknow.rpc.protocol_pb2.ProtocolRunInfo(
@@ -25,7 +46,8 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         return response
 
-    def _start_protocol(self, identifier, *args):
+    @staticmethod
+    def _start_protocol(identifier, *args):
         LOGGER.info("Starting protocol %s (%s)", identifier, args)
 
     def start_protocol(self, request, context):

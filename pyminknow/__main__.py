@@ -10,6 +10,8 @@ import grpc
 
 import config
 import service.device
+import service.protocol
+import service.manager
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,6 +22,12 @@ TODO
 USAGE = """
 TODO
 """
+
+SERVICES = {
+    service.device.DeviceService,
+    service.protocol.ProtocolService,
+    service.manager.ManagerService,
+}
 
 
 def get_args():
@@ -33,17 +41,24 @@ def get_args():
     return parser.parse_args()
 
 
+def get_server(port: int):
+    thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+    server = grpc.server(thread_pool)
+    server.add_insecure_port('[::]:{port}'.format(port=port))
+
+    return server
+
+
 def serve(port: int, grace: float):
     """Run the server"""
 
-    thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
-    server = grpc.server(thread_pool)
+    server = get_server(port=port)
 
-    servicer = service.device.DeviceService()
-
-    servicer.map_to_server(server)
-
-    server.add_insecure_port('[::]:{port}'.format(port=port))
+    # Register services
+    for Service in SERVICES:
+        servicer = Service()
+        servicer.add_to_server(server)
+        LOGGER.info('Registered %s', Service.__name__)
 
     LOGGER.info("Starting service (listening on port %s)...", port)
 
