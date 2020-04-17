@@ -8,6 +8,7 @@ import logging
 import grpc
 
 import config
+import minknow.rpc.device_pb2
 import minknow.rpc.device_pb2_grpc
 
 LOGGER = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ def get_args():
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Debug logging')
-    parser.add_argument('-o', '--host', type=int, default=config.DEFAULT_HOST, help='Connect to this host')
+    parser.add_argument('-o', '--host', default=config.DEFAULT_HOST, help='Connect to this host')
     parser.add_argument('-p', '--port', type=int, default=config.DEFAULT_PORT, help='Connect to this port')
 
     return parser.parse_args()
@@ -44,10 +45,15 @@ def connect(host: str, port: int):
     return stub
 
 
-def run(stub):
-    state = stub.get_device_state()
+def get_device_state(stub):
+    request = minknow.rpc.device_pb2.GetDeviceStateRequest()
+    state = stub.get_device_state(request)
 
-    print(state)
+    return state
+
+
+def run(stub):
+    print(get_device_state(stub))
 
 
 def main():
