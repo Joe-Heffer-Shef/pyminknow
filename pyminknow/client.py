@@ -32,22 +32,31 @@ def get_args():
     return parser.parse_args()
 
 
+def get_device_stub(channel):
+    return minknow.rpc.device_pb2_grpc.DeviceServiceStub(channel=channel)
+
+
 def connect(host: str, port: int):
     """
     Connect to the server and initialise client
     """
 
     target = '{host}:{port}'.format(host=host, port=port)
+
+    LOGGER.info("Connecting to '%s'...", target)
+
     channel = grpc.insecure_channel(target=target)
 
-    stub = minknow.rpc.device_pb2_grpc.DeviceServiceStub(channel=channel)
+    stub = get_device_stub(channel)
 
     return stub
 
 
 def get_device_state(stub):
     request = minknow.rpc.device_pb2.GetDeviceStateRequest()
-    state = stub.get_device_state(request)
+    response = stub.get_device_state(request)
+
+    state = response.device_state
 
     return state
 
