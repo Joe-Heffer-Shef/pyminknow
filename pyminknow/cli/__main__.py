@@ -4,17 +4,11 @@ Mock minKNOW gRPC client
 
 import argparse
 import logging
-import warnings
 
 import grpc
 
 import config
-import minknow.rpc.device_pb2
-import minknow.rpc.device_pb2_grpc
-import minknow.rpc.manager_pb2
-import minknow.rpc.manager_pb2_grpc
-import minknow.rpc.protocol_pb2
-import minknow.rpc.protocol_pb2_grpc
+import client.clients
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,81 +50,6 @@ def connect(host: str, port: int):
     return channel
 
 
-class RpcClient:
-    stub_name = None
-    _stub = None
-
-    def __init__(self, channel):
-        self.channel = channel
-
-    @staticmethod
-    def get_stub(service: str, channel):
-        stubs = dict(
-            device=minknow.rpc.device_pb2_grpc.DeviceServiceStub,
-            protocol=minknow.rpc.protocol_pb2_grpc.ProtocolServiceStub,
-            manager=minknow.rpc.manager_pb2_grpc.ManagerServiceStub,
-        )
-
-        Stub = stubs[service]
-
-        stub = Stub(channel=channel)
-
-        return stub
-
-    @property
-    def stub(self):
-        if not self._stub:
-            self._stub = self.get_stub(self.stub_name, self.channel)
-
-        return self._stub
-
-
-class ManagerClient(RpcClient):
-    stub_name = 'manager'
-
-    def list_devices(self):
-        warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
-
-        request = minknow.rpc.manager_pb2.ListDevicesRequest()
-        return self.stub.list_devices(request)
-
-    def flow_cell_positions(self) -> iter:
-        request = minknow.rpc.manager_pb2.FlowCellPositionsRequest()
-        for response in self.stub.flow_cell_positions(request):
-            yield from response.positions
-
-
-class ProtocolClient(RpcClient):
-    stub_name = 'protocol'
-
-    def list_protocols(self):
-        request = minknow.rpc.protocol_pb2.ListProtocolsRequest()
-        return self.stub.list_protocols(request)
-
-    def start_protocol(self, identifier: str, *args):
-        request = minknow.rpc.protocol_pb2.StartProtocolRequest(
-            identifier=identifier,
-            args=args,
-        )
-        return self.stub.start_protocol(request)
-
-
-class DeviceClient(RpcClient):
-    stub_name = 'device'
-
-    def get_device_state(self):
-        request = minknow.rpc.device_pb2.GetDeviceStateRequest()
-        response = self.stub.get_device_state(request)
-
-        state = response.device_state
-
-        # Get human-readable state
-        name = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState.Name(state)
-        LOGGER.info("Device status: '%s'", name)
-
-        return state
-
-
 def configure_logging(verbose: bool = False):
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
     logging.captureWarnings(capture=True)
@@ -144,12 +63,12 @@ def main():
 
         # Device state
         if args.device_state:
-            client = DeviceClient(channel)
+            client = client.clients.DeviceClient(channel)
             print(client.get_device_state())
 
         # List protocols
         elif args.list_protocols:
-            client = ProtocolClient(channel)
+            client = client.clients.ProtocolClient(channel)
             for protocol in client.list_protocols().protocols:
                 print(protocol)
 
