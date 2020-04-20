@@ -1,4 +1,4 @@
-FROM python:slim-buster
+FROM python:3.7-slim-buster
 MAINTAINER "Joe Heffer <j.heffer@sheffield.ac.uk>"
 
 # Build
