@@ -1,5 +1,5 @@
 DEFAULT_HOST = 'localhost'
-DEFAULT_PORT = 50051
+DEFAULT_PORT = 9501
 GRACE = 5  # seconds
 
 PROTOCOLS = (

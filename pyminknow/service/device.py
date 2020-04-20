@@ -19,3 +19,9 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
         device_state = random.choice(possible_states)
 
         return minknow.rpc.device_pb2.GetDeviceStateResponse(device_state=device_state)
+
+    def get_flow_cell_info(self, request, context):
+        return minknow.rpc.device_pb2.GetFlowCellInfoResponse(
+            has_flow_cell=True,
+            flow_cell_id="FAH00000",
+        )
