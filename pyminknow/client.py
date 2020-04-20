@@ -98,12 +98,26 @@ class ProtocolClient(RpcClient):
         request = minknow.rpc.protocol_pb2.ListProtocolsRequest()
         return self.stub.list_protocols(request)
 
-    def start_protocol(self, identifier: str, *args):
+    def start_protocol(self, identifier: str, user_info: dict, *args) -> str:
+        """
+        :param identifier: Protocol ID
+        :param user_info: User input describing the protocol
+        :returns: Run ID
+        """
+        _user_info = minknow.rpc.protocol_pb2.ProtocolRunUserInfo(
+            protocol_group_id=user_info['protocol_group_id'],
+            sample_id=user_info['sample_id'],
+        )
+
         request = minknow.rpc.protocol_pb2.StartProtocolRequest(
             identifier=identifier,
+            user_info=_user_info,
             args=args,
         )
-        return self.stub.start_protocol(request)
+
+        response = self.stub.start_protocol(request)
+
+        return response.run_id
 
     def list_protocol_runs(self) -> list:
         request = minknow.rpc.protocol_pb2.ListProtocolRunsRequest()
@@ -114,7 +128,7 @@ class ProtocolClient(RpcClient):
     def latest_run_id(self) -> int:
         return self.list_protocol_runs()[0]
 
-    def get_run_info_by_id(self, run_id: int = None):
+    def get_run_info_by_id(self, run_id: str = None):
         # Get latest run ID
         if run_id is None:
             run_id = self.latest_run_id
