@@ -212,7 +212,7 @@ def main():
             client = ManagerClient(channel)
 
             if args.list_devices:
-                devices = client.flow_cell_positions()
+                devices = client.list_devices()
                 LOGGER.info("Found %s active devices", len(devices.active))
                 for device in devices.active:
                     print(device)
