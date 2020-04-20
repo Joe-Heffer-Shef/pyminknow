@@ -15,7 +15,7 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     add_to_server = minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server
 
     def list_devices(self, request, context):
-        warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
+        warnings.warn('Use `flow_cell_positions` instead', DeprecationWarning)
 
         return minknow.rpc.manager_pb2.ListDevicesResponse(
             inactive=['MN0001', 'MN0002'],

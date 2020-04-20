@@ -2,6 +2,7 @@ import logging
 import uuid
 import random
 import datetime
+import warnings
 
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
@@ -39,17 +40,12 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
             ) for protocol_name in config.PROTOCOLS
         ]
 
-    def get_run_info(self, request, context):
-        return minknow.rpc.protocol_pb2.ProtocolRunInfo(
-            run_id=request.run_id,
-        )
-
     @classmethod
     def make_run_id(cls) -> str:
         return uuid.uuid4().hex
 
     @classmethod
-    def _start_protocol(cls, identifier, *args):
+    def _start_protocol(cls, identifier, user_info, *args):
         """Emulate a real process running"""
         LOGGER.info("Starting protocol %s (Args: %s)", identifier, args)
 
@@ -65,6 +61,10 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
             state=random.choice(minknow.rpc.protocol_pb2.ProtocolState.keys()),
             start_time=datetime.datetime.utcnow(),
             end_time=None,
+            user_info=dict(
+                protocol_group_id=user_info.protocol_group_id,
+                sample_id=user_info.sample_id,
+            )
         )
 
         return run_id
@@ -74,7 +74,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         LOGGER.info("Protocol group ID: %s", request.user_info.protocol_group_id)
         LOGGER.info("Sample ID: %s", request.user_info.sample_id)
 
-        run_id = self._start_protocol(identifier=request.identifier, *request.args)
+        run_id = self._start_protocol(identifier=request.identifier, user_info=request.user_info, *request.args)
 
         return minknow.rpc.protocol_pb2.StartProtocolResponse(run_id=run_id)
 
@@ -87,4 +87,24 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         run_info = self.runs[run_id]
 
-        return minknow.rpc.protocol_pb2.ProtocolRunInfo(**run_info)
+        response = minknow.rpc.protocol_pb2.ProtocolRunInfo(**run_info)
+
+        response.user_info = minknow.rpc.protocol_pb2.ProtocolRunUserInfo(
+            protocol_group_id="Group ID?",
+            sample_id='Sample ID?',
+        )
+
+        return response
+
+    def set_sample_id(self, request, context):
+        """
+        Specify the sample id to set for the next protocol
+        """
+
+        warnings.warn('The sample_id should be set in the request when a protocol starts', DeprecationWarning)
+
+        sample_id = request.sample_id
+
+        LOGGER.info('Sample ID: %s', sample_id)
+
+        return minknow.rpc.protocol_pb2.SetSampleIdResponse()
