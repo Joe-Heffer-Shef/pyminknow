@@ -1,23 +1,21 @@
 FROM python:3.7-slim-buster
-MAINTAINER "Joe Heffer <j.heffer@sheffield.ac.uk>"
 
-# Build
 EXPOSE 9501
 
-# Update system
 RUN apt-get update
-
-RUN useradd --create-home minknow
-WORKDIR /home/minknow
-USER minknow
-
 RUN pip install --upgrade pip
 
-# Install application
+RUN useradd minknow --create-home
+WORKDIR /home/minknow
+
+USER minknow
+
 COPY requirements.txt .
-RUN pip install -r requirements.txt --quiet
+RUN pip install -r requirements.txt --user
 
-COPY pyminknow .
+COPY pyminknow pyminknow
 
-# Start
+LABEL maintainer="Joe Heffer <j.heffer@sheffield.ac.uk>" \
+version=1.0.0
+
 CMD ["python", "pyminknow", "--verbose"]
