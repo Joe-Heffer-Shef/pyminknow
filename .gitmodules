@@ -1,0 +1,3 @@
+[submodule "minknow_lims_interface"]
+	path = minknow_lims_interface
+	url = https://github.com/nanoporetech/minknow_lims_interface.git
