@@ -9,8 +9,8 @@ RUN useradd minknow --create-home --user-group
 EXPOSE 9501
 
 # Get security updates
-#RUN apt-get update
-#RUN pip install --upgrade pip
+RUN apt-get update
+RUN pip install --upgrade pip
 
 WORKDIR /home/minknow
 
