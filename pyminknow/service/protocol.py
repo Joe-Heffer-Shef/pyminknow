@@ -4,6 +4,10 @@ import random
 import datetime
 import warnings
 
+from collections import OrderedDict
+
+import google.protobuf.wrappers_pb2
+
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
 
@@ -18,7 +22,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     """
     add_to_server = minknow.rpc.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
 
-    runs = dict()
+    runs = OrderedDict()
 
     def list_protocols(self, request, context):
         if request.force_reload:
@@ -78,20 +82,26 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         return minknow.rpc.protocol_pb2.StartProtocolResponse(run_id=run_id)
 
+    @property
+    def latest_run_id(self):
+        """The identifier of the most recently-started run"""
+        return next(reversed(self.runs.keys()))
+
     def get_run_info(self, request, context):
         run_id = request.run_id
 
         # If no run ID is provided, information about the most recently started protocol run is provided
         if not run_id:
-            raise NotImplementedError
+            run_id = self.latest_run_id
 
         run_info = self.runs[run_id]
 
+        # Build response
         response = minknow.rpc.protocol_pb2.ProtocolRunInfo(**run_info)
 
         response.user_info = minknow.rpc.protocol_pb2.ProtocolRunUserInfo(
-            protocol_group_id="Group ID?",
-            sample_id='Sample ID?',
+            protocol_group_id=google.protobuf.wrappers_pb2.StringValue("Group ID?"),
+            sample_id=google.protobuf.wrappers_pb2.StringValue('Sample ID?'),
         )
 
         return response
