@@ -11,12 +11,6 @@ Follow this tutorial to generate the Python code from the `.proto` files: gRPC B
 Python [Generating client and server code](https://grpc.io/docs/tutorials/basic/python/#generating-client-and-server-code).
 (See also: gRPC [Python Generated Code Reference](https://grpc.io/docs/reference/python/generated-code/))
 
-To enable these files to be imported as Python modules, you need to create `__init__.py` files in each directory.
-
-```bash
-$ touch pyminknow/minknow/__init__.py pyminknow/minknow/rpc/__init__.py
-```
-
 # Usage
 
 The service may run in a container or in a Python environment.
