@@ -20,9 +20,7 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
             minknow.rpc.manager_pb2.ListDevicesResponse.ActiveDevice(
                 name='MN0000',
                 layout=minknow.rpc.manager_pb2.ListDevicesResponse.DeviceLayout(x=3, y=4),
-                ports=minknow.rpc.manager_pb2.ListDevicesResponse.RpcPorts(
-                    insecure_grpc=9501,
-                )
+                ports=minknow.rpc.manager_pb2.ListDevicesResponse.RpcPorts(insecure_grpc=9501)
             )
         ]
 
