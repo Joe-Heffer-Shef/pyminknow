@@ -24,6 +24,7 @@ $ docker run --name min --publish 5901:5901 pyminknow:latest
 
 ## Python
 
+You should do this inside a Python virtual environment.
 Compile the gRPC modules, install packages and then run the service.
 
 ```bash
