@@ -14,8 +14,7 @@ Python [Generating client and server code](https://grpc.io/docs/tutorials/basic/
 To enable these files to be imported as Python modules, you need to create `__init__.py` files in each directory.
 
 ```bash
-$ touch pyminknow/minknow/__init__.py
-$ touch pyminknow/minknow/rpc/__init__.py
+$ touch pyminknow/minknow/__init__.py pyminknow/minknow/rpc/__init__.py
 ```
 
 # Usage
@@ -26,7 +25,7 @@ The service may run in a container or in a Python environment.
 
 ```bash
 $ docker build . -t pyminknow:latest
-$ docker run --public 5901:5901 --name min .
+$ docker run --publish 5901:5901 --name min pyminknow:latest
 ```
 
 ## Python
