@@ -24,13 +24,16 @@ The service may run in a container or in a Python environment.
 ## Container
 
 ```bash
-$ docker build . -t pyminknow:latest
-$ docker run --publish 5901:5901 --name min pyminknow:latest
+$ docker build -t pyminknow:latest .
+$ docker run --name min --publish 5901:5901 pyminknow:latest
 ```
 
 ## Python
 
+Compile the gRPC modules, install packages and then run the service.
+
 ```bash
+$ sh compile_grpc.sh
 $ pip install -r requirements.txt
 $ python pyminknow
 ```
