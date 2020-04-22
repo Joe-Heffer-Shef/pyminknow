@@ -18,7 +18,9 @@ You may build and run the container using the commands below:
 
 ```bash
 $ docker build -t pyminknow:latest .
-$ docker run --name min --publish 5901:5901 -d pyminknow:latest
+$ docker run --name minit --publish 5901:5901 -d pyminknow:latest
+# Start the SSH service
+$ docker exec -it --user root minit service ssh start
 ```
 
 ## Python
