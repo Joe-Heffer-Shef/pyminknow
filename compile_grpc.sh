@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Stop on errors
+set -e
+
 # Create directory structure
 mkdir pyminknow/minknow/rpc --parents
 
