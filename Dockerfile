@@ -10,7 +10,7 @@ WORKDIR /home/minknow
 EXPOSE 9501 22
 
 # Get security updates and install packages
-RUN apt-get update && apt-get --yes install openssh-server \
+RUN apt-get update && apt-get --yes install openssh-server rsync \
   # Clear apt cache to reduce image size https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
   && rm -rf /var/lib/apt/lists/* && apt-get clean \
   && pip install --upgrade pip
@@ -22,6 +22,9 @@ COPY . .
 RUN useradd minit --create-home \
   && mkdir /home/minit/.ssh \
   && cat .ssh/id_rsa.pub >> /home/minit/.ssh/authorized_keys
+
+# Create sequencer data directory
+RUN mkdir /data && chown minknow:minknow /data
 
 # Install Python packages
 RUN pip install -r requirements.txt

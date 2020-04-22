@@ -1,9 +1,12 @@
 import logging
 import warnings
 import random
+import socket
 
 import minknow.rpc.manager_pb2
 import minknow.rpc.manager_pb2_grpc
+
+import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -13,6 +16,14 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     Manager service
     """
     add_to_server = minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server
+
+    def describe_host(self, request, context):
+        return minknow.rpc.manager_pb2.DescribeHostResponse(
+            product_code=config.PRODUCT_CODE,
+            description=config.DESCRIPTION,
+            serial=config.SERIAL,
+            network_name=socket.gethostname(),
+        )
 
     @property
     def active(self) -> list:

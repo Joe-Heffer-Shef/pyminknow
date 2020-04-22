@@ -7,3 +7,9 @@ PROTOCOLS = (
     'V2',
     'V3',
 )
+
+DATA_DIR = '/data'
+
+PRODUCT_CODE = 'MIN-101B-FAKE'
+DESCRIPTION = 'Fake MinIT'
+SERIAL = 'FAKE-0123456789'

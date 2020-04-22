@@ -5,8 +5,10 @@ Mock minKNOW gRPC client
 import argparse
 import logging
 import warnings
+import json
 
 import grpc
+import google.protobuf.wrappers_pb2
 
 import minknow.rpc.device_pb2
 import minknow.rpc.device_pb2_grpc
@@ -75,6 +77,10 @@ class ManagerClient(RpcClient):
 
     stub_name = 'manager'
 
+    def describe_host(self):
+        request = minknow.rpc.manager_pb2.DescribeHostRequest()
+        return self.stub.describe_host(request)
+
     def list_devices(self):
         warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
 
@@ -98,15 +104,19 @@ class ProtocolClient(RpcClient):
         request = minknow.rpc.protocol_pb2.ListProtocolsRequest()
         return self.stub.list_protocols(request)
 
-    def start_protocol(self, identifier: str, user_info: dict, *args) -> str:
+    def start_protocol(self, identifier: str, user_info: dict = None, args: list = None) -> str:
         """
         :param identifier: Protocol ID
-        :param user_info: User input describing the protocol
+        :param user_info: User input describing the protocol (keys: protocol_group_id, sample_id)
+        :param args: The arguments to pass to the protocol
         :returns: Run ID
         """
+
+        user_info = user_info or dict()
+        # StringValue may be null
         _user_info = minknow.rpc.protocol_pb2.ProtocolRunUserInfo(
-            protocol_group_id=user_info['protocol_group_id'],
-            sample_id=user_info['sample_id'],
+            protocol_group_id=google.protobuf.wrappers_pb2.StringValue(value=user_info.get('protocol_group_id')),
+            sample_id=google.protobuf.wrappers_pb2.StringValue(value=user_info.get('sample_id')),
         )
 
         request = minknow.rpc.protocol_pb2.StartProtocolRequest(
@@ -168,6 +178,10 @@ def get_args():
     parser.add_argument('-d', '--list_devices', action='store_true', help='List available devices')
     parser.add_argument('-f', '--flow_cell_positions', action='store_true',
                         help='List all known positions where flow cells can be inserted')
+    parser.add_argument('-i', '--start_protocol', help='Start a protocol given by this identifier')
+    parser.add_argument('-g', '--protocol_group_id', help='The group which the experiment should be held in')
+    parser.add_argument('-r', '--list_protocol_runs', action='store_true',
+                        help='List previously started protocol run IDs, in order of starting')
 
     return parser, parser.parse_args()
 
@@ -197,28 +211,50 @@ def main():
 
     with connect(host=args.host, port=args.port) as channel:
 
-        # Device state
+        manager_client = ManagerClient(channel)
+
+        LOGGER.info(manager_client.describe_host())
+
+        # Device
         if args.device_state:
             client = DeviceClient(channel)
             print(client.get_device_state())
 
-        # List protocols
-        elif args.list_protocols:
+        # Protocol
+        elif args.list_protocols or args.start_protocol or args.list_protocol_runs:
             client = ProtocolClient(channel)
-            for protocol in client.list_protocols().protocols:
-                print(protocol)
 
+            if args.list_protocols:
+                for protocol in client.list_protocols().protocols:
+                    print(protocol)
+            elif args.start_protocol:
+                run_id = client.start_protocol(
+                    identifier=args.start_protocol,
+                    user_info=dict(protocol_group_id=args.protocol_group_id),
+                    args=[
+                        "blah",
+                    ],
+                )
+                LOGGER.info("Started run ID: %s", run_id)
+                run_info = client.get_run_info_by_id(run_id)
+                print(run_info)
+            elif args.list_protocol_runs:
+                run_ids = client.list_protocol_runs()
+                print(run_ids)
+            else:
+                raise ValueError('Unknown command')
+
+        # Manager
         elif args.list_devices or args.flow_cell_positions:
-            client = ManagerClient(channel)
 
             if args.list_devices:
-                devices = client.list_devices()
+                devices = manager_client.list_devices()
                 LOGGER.info("Found %s active devices", len(devices.active))
                 for device in devices.active:
                     print(device)
 
             elif args.flow_cell_positions:
-                for item in client.flow_cell_positions():
+                for item in manager_client.flow_cell_positions():
                     print(item)
 
             else:
