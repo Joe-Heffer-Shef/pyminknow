@@ -232,7 +232,12 @@ def main():
                     identifier=args.start_protocol,
                     user_info=dict(protocol_group_id=args.protocol_group_id),
                     args=[
-                        "blah",
+                        "--fast5=on",
+                        "--fast5_data", "trace_table", "fastq", "raw", "zlib_compress",
+                        "--base_calling=on",
+                        "--fastq=on",
+                        "--barcoding_kits", "EXP-NBD114", "EXP-NBD104",
+                        "--experiment_time=24"
                     ],
                 )
                 LOGGER.info("Started run ID: %s", run_id)
