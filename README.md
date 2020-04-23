@@ -1,16 +1,26 @@
 # minKNOW mock server
 
-This code will emulate a [Oxford Nanopore Technologies](https://nanoporetech.com/) gene sequencing device (e.g. [minION](https://nanoporetech.com/products/minion) or minKNOW) using its [gRPC LIMS interface](https://github.com/nanoporetech/minknow_lims_interface). It is designed to form part of a software development environment to facilitate rapid prototyping and automated testing.
+This code will emulate a [Oxford Nanopore Technologies](https://nanoporetech.com/) gene sequencing device (e.g. [minION](https://nanoporetech.com/products/minion) or minKNOW) using its gRPC Remote Procedure Calls [LIMS interface](https://github.com/nanoporetech/minknow_lims_interface) to interact with its embedded software. This package is designed to form part of a software development environment to facilitate rapid prototyping and automated testing.
 
 # Installation
 
 ## Generating RPC code
 
-The script `compile_grpc.sh` contains the command to compile the protocol buffers and gRPC interface from the `.proto` files in the minKNOW submodule. (See this tutorial on generating Python code: gRPC Basics - Python [Generating client and server code](https://grpc.io/docs/tutorials/basic/python/#generating-client-and-server-code).) The service expects the Python modules for the gRPC interface to be in `pyminknow/minknow/rpc`.
+The script `compile_grpc.sh` contains the command to compile the protocol buffers and gRPC interface from the `.proto` files in the minKNOW submodule. (See this tutorial on generating Python code: gRPC Basics - Python [Generating client and server code](https://grpc.io/docs/tutorials/basic/python/#generating-client-and-server-code).)
+
+The service expects the Python modules for the gRPC interface to be in `pyminknow/minknow/rpc`.
 
 # Usage
 
-The service may run in a container or in a Python environment.
+The service may run in a container or in a Python environment. To see the usage reference, run:
+
+```bash
+$ python pyminknow --help
+```
+
+
+
+## Test client
 
 You may use `client.py` to test the functionality of the server. To get help, run:
 
@@ -33,7 +43,7 @@ $ docker exec -it --user root minit service ssh start
 
 ## Python
 
-You should do this inside a Python 3.7 virtual environment. Compile the gRPC modules, install packages and then run the service.
+You should do this inside a Python 3.7 virtual environment. Compile the gRPC modules, install packages and then run the service. 
 
 ```bash
 $ sh compile_grpc.sh
