@@ -1,6 +1,6 @@
 # minKNOW mock server
 
-This code will emulate a minKNOW machine using its [gRPC LIMS interface](https://github.com/nanoporetech/minknow_lims_interface).
+This code will emulate a [Oxford Nanopore Technologies](https://nanoporetech.com/) gene sequencing device (e.g. [minION](https://nanoporetech.com/products/minion) or minKNOW) using its [gRPC LIMS interface](https://github.com/nanoporetech/minknow_lims_interface). It is designed to form part of a software development environment to facilitate rapid prototyping and automated testing.
 
 # Installation
 
