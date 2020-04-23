@@ -4,17 +4,25 @@ This code will emulate a minKNOW machine using its [gRPC LIMS interface](https:/
 
 # Installation
 
-The service expects the Python modules for the gRPC interface to be in `pyminknow/minknow/rpc`.
+## Generating RPC code
 
-Follow this tutorial to generate the Python code from the `.proto` files: gRPC Basics - Python [Generating client and server code](https://grpc.io/docs/tutorials/basic/python/#generating-client-and-server-code). (See also: gRPC [Python Generated Code Reference](https://grpc.io/docs/reference/python/generated-code/))
+The script `compile_grpc.sh` contains the command to compile the protocol buffers and gRPC interface from the `.proto` files in the minKNOW submodule. (See this tutorial on generating Python code: gRPC Basics - Python [Generating client and server code](https://grpc.io/docs/tutorials/basic/python/#generating-client-and-server-code).) The service expects the Python modules for the gRPC interface to be in `pyminknow/minknow/rpc`.
 
 # Usage
 
 The service may run in a container or in a Python environment.
 
+You may use `client.py` to test the functionality of the server. To get help, run:
+
+```bash
+$ python client.py --help
+```
+
+
+
 ## Container
 
-You may build and run the container using the commands below:
+The container is based on Debian Linux and uses Python 3.7 as defined in the `Dockerfile`. You may build and run the container using the commands below.
 
 ```bash
 $ docker build --tag pyminknow:latest .
@@ -25,7 +33,7 @@ $ docker exec -it --user root minit service ssh start
 
 ## Python
 
-You should do this inside a Python virtual environment. Compile the gRPC modules, install packages and then run the service.
+You should do this inside a Python 3.7 virtual environment. Compile the gRPC modules, install packages and then run the service.
 
 ```bash
 $ sh compile_grpc.sh
