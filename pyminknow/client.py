@@ -1,11 +1,10 @@
 """
-Mock minKNOW gRPC client
+This service mimics a Nanopore minKNOW gene sequencing device by using its gRPC interface.
 """
 
 import argparse
 import logging
 import warnings
-import json
 
 import grpc
 import google.protobuf.wrappers_pb2
