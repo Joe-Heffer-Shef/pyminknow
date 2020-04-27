@@ -28,7 +28,7 @@ RUN mkdir /home/minit/.ssh \
 RUN mkdir /data && chown minknow:minknow /data
 
 # Install Python packages
-RUN pip install -r requirements.txt
+RUN pip install pyminknow
 
 # Compile gRPC modules
 RUN sh compile_grpc.sh
