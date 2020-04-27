@@ -21,7 +21,7 @@ COPY . .
 RUN useradd minit --create-home
 # Create a SSH user for the COGUK system with passwordless access
 RUN mkdir /home/minit/.ssh \
-&& cat /run/secrets/id_rsa.pub >> /home/minit/.ssh/authorized_keys
+&& cat /run/secrets/public_key >> /home/minit/.ssh/authorized_keys
 
 # Create sequencer data directory
 RUN mkdir /data && chown minknow:minknow /data
