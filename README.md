@@ -46,8 +46,9 @@ $ docker exec -it --user root minit service ssh start
 You should do this inside a Python 3.7 virtual environment. Compile the gRPC modules, install packages and then run the service. 
 
 ```bash
+# Compile gRPC modules
 $ sh compile_grpc.sh
-$ pip install -r requirements.txt
-$ python pyminknow
+$ pip install pyminkow
+$ python -m pyminknow
 ```
 
