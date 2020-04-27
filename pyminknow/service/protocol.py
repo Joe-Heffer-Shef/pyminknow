@@ -1,6 +1,5 @@
 import logging
 import uuid
-import random
 import datetime
 import warnings
 import os.path
@@ -13,7 +12,7 @@ import google.protobuf.timestamp_pb2
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
 
-import config
+import pyminknow.config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ class Run:
 
     @property
     def output_path(self):
-        return os.path.join(config.DATA_DIR, self.run_id)
+        return os.path.join(pyminknow.config.DATA_DIR, self.run_id)
 
     @classmethod
     def make_run_id(cls) -> str:
@@ -130,7 +129,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
             minknow.rpc.protocol_pb2.ProtocolInfo(
                 identifier=protocol_name,
                 name=protocol_name,
-            ) for protocol_name in config.PROTOCOLS
+            ) for protocol_name in pyminknow.config.PROTOCOLS
         ]
 
     @classmethod
