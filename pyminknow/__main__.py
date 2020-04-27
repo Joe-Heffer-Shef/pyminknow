@@ -1,7 +1,3 @@
-"""
-Mock minKNOW gRPC server
-"""
-
 import argparse
 import logging
 import concurrent.futures
@@ -16,11 +12,11 @@ import service.manager
 LOGGER = logging.getLogger(__name__)
 
 DESCRIPTION = """
-TODO
+This service mimics a Nanopore minKNOW gene sequencing device by using its gRPC interface.
 """
 
 USAGE = """
-TODO
+python pyminknow --help
 """
 
 SERVICES = {

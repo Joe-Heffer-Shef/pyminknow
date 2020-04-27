@@ -1,5 +1,5 @@
 """
-This service mimics a Nanopore minKNOW gene sequencing device by using its gRPC interface.
+This is a client to test a Nanopore minKNOW gene sequencing device by using its gRPC interface.
 """
 
 import argparse
