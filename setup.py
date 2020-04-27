@@ -5,7 +5,7 @@ with open('README.md') as file:
 
 setuptools.setup(
     name='pyminknow',
-    version='0.0.1',
+    version='0.0.0a',
     author="Joe Heffer",
     author_email="j.heffer@sheffield.ac.uk",
     description="This service mimics a Nanopore minKNOW gene sequencing device by using its gRPC interface.",
@@ -19,4 +19,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=[
+        'grpcio~=1.27',
+        'protobuf~=3.11',
+        'grpcio-tools~=1.28',
+    ]
 )

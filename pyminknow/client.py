@@ -1,7 +1,3 @@
-"""
-This is a client to test a Nanopore minKNOW gene sequencing device by using its gRPC interface.
-"""
-
 import argparse
 import logging
 import warnings
@@ -16,16 +12,12 @@ import minknow.rpc.manager_pb2_grpc
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
 
-import config
+import pyminknow.config
 
 LOGGER = logging.getLogger(__name__)
 
 DESCRIPTION = """
-TODO
-"""
-
-USAGE = """
-TODO
+This is a client to test a Nanopore minKNOW gene sequencing device by using its gRPC interface.
 """
 
 
@@ -167,11 +159,11 @@ class DeviceClient(RpcClient):
 
 
 def get_args():
-    parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Debug logging')
-    parser.add_argument('-o', '--host', default=config.DEFAULT_HOST, help='Connect to this host')
-    parser.add_argument('-p', '--port', type=int, default=config.DEFAULT_PORT, help='Connect to this port')
+    parser.add_argument('-o', '--host', default=pyminknow.config.DEFAULT_HOST, help='Connect to this host')
+    parser.add_argument('-p', '--port', type=int, default=pyminknow.config.DEFAULT_PORT, help='Connect to this port')
     parser.add_argument('-s', '--device_state', action='store_true', help='Get device state')
     parser.add_argument('-l', '--list_protocols', action='store_true', help='List available protocols')
     parser.add_argument('-d', '--list_devices', action='store_true', help='List available devices')
