@@ -20,6 +20,8 @@ DESCRIPTION = """
 This is a client to test a Nanopore minKNOW gene sequencing device by using its gRPC interface.
 """
 
+USAGE = "python -m pyminknow.client"
+
 
 class RpcClient:
     """
@@ -159,7 +161,7 @@ class DeviceClient(RpcClient):
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Debug logging')
     parser.add_argument('-o', '--host', default=pyminknow.config.DEFAULT_HOST, help='Connect to this host')
