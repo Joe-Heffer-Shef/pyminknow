@@ -15,14 +15,10 @@ RUN apt-get update && apt-get --yes install openssh-server rsync \
   && rm -rf /var/lib/apt/lists/* && apt-get clean \
   && pip install --upgrade pip
 
-# Copy all files into container except those specified in .dockerignore
-COPY . .
-
-RUN useradd minit --create-home
-COPY .ssh .
 # Create a SSH user for the COGUK system with passwordless access
-RUN mkdir /home/minit/.ssh \
-&& cat .ssh/id_rsa.pub >> /home/minit/.ssh/authorized_keys
+RUN useradd minit --create-home && mkdir /home/minit/.ssh
+COPY .ssh/id_rsa.pub .ssh/
+RUN cat .ssh/id_rsa.pub >> /home/minit/.ssh/authorized_keys
 
 # Create sequencer data directory
 RUN mkdir /data && chown minknow:minknow /data
@@ -31,8 +27,11 @@ RUN mkdir /data && chown minknow:minknow /data
 RUN pip install pyminknow
 
 # Compile gRPC modules
+COPY compile_grpc.sh .
+COPY minknow_lims_interface minknow_lims_interface
+RUN pwd && ls -l
 RUN sh compile_grpc.sh
 
 USER minknow
 
-CMD ["python", "pyminknow"]
+CMD ["python", "-m", "pyminknow"]
