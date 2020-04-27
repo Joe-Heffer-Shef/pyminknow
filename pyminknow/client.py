@@ -106,6 +106,7 @@ class ProtocolClient(RpcClient):
         """
 
         user_info = user_info or dict()
+
         # StringValue may be null
         _user_info = minknow.rpc.protocol_pb2.ProtocolRunUserInfo(
             protocol_group_id=google.protobuf.wrappers_pb2.StringValue(value=user_info.get('protocol_group_id')),
@@ -147,17 +148,15 @@ class DeviceClient(RpcClient):
 
     stub_name = 'device'
 
-    def get_device_state(self):
+    def get_device_state(self) -> str:
         request = minknow.rpc.device_pb2.GetDeviceStateRequest()
         response = self.stub.get_device_state(request)
 
-        state = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState(response.device_state)
-
         # Get human-readable state
-        name = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState.Name(state)
-        LOGGER.info("Device status: '%s'", name)
+        state_name = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState.Name(response.device_state)
+        LOGGER.info("Device status: %s => '%s'", response.device_state, state_name)
 
-        return state
+        return state_name
 
 
 def get_args():
