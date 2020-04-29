@@ -28,6 +28,9 @@ class RpcClient:
     gRPC client
     """
 
+    # TODO timeouts
+    # https://groups.google.com/forum/#!topic/grpc-io/kNBQlQjxQVU
+
     stub_name = None
     _stub = None
 
@@ -70,19 +73,28 @@ class ManagerClient(RpcClient):
 
     stub_name = 'manager'
 
-    def describe_host(self):
+    def describe_host(self, **kwargs) -> dict:
         request = minknow.rpc.manager_pb2.DescribeHostRequest()
-        return self.stub.describe_host(request)
+        response = self.stub.describe_host(request, **kwargs)
 
-    def list_devices(self):
+        # return dict(
+        #     product_code=response.product_code,
+        #     description=response.description,
+        #     serial=response.serial,
+        #     network_name=response.network_name,
+        # )
+
+        return response
+
+    def list_devices(self, **kwargs):
         warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
 
         request = minknow.rpc.manager_pb2.ListDevicesRequest()
-        return self.stub.list_devices(request)
+        return self.stub.list_devices(request, **kwargs)
 
-    def flow_cell_positions(self) -> iter:
+    def flow_cell_positions(self, **kwargs) -> iter:
         request = minknow.rpc.manager_pb2.FlowCellPositionsRequest()
-        for response in self.stub.flow_cell_positions(request):
+        for response in self.stub.flow_cell_positions(request, **kwargs):
             yield from response.positions
 
 

@@ -4,6 +4,8 @@ import random
 import minknow.rpc.device_pb2
 import minknow.rpc.device_pb2_grpc
 
+import pyminknow.config
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -23,5 +25,5 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
     def get_flow_cell_info(self, request, context):
         return minknow.rpc.device_pb2.GetFlowCellInfoResponse(
             has_flow_cell=True,
-            flow_cell_id="FAH00000",
+            flow_cell_id=pyminknow.config.FLOW_CELL_ID,
         )

@@ -20,7 +20,7 @@ class Server:
     def __init__(self, port: int):
         self.port = port
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
-        self.server = grpc.server(self.thread_pool)
+        self.server = grpc.server(thread_pool=self.thread_pool)
         self.server.add_insecure_port('[::]:{port}'.format(port=port))
 
         # Register services
@@ -31,9 +31,12 @@ class Server:
 
     def start(self):
         self.server.start()
+        LOGGER.info("Listening on port %s", self.port)
 
     def stop(self, grace: float):
+        LOGGER.info('Stopping server...')
         self.server.stop(grace=grace)
+        LOGGER.info("Server stopped")
 
     def wait(self):
         self.server.wait_for_termination()
@@ -43,10 +46,6 @@ class Server:
 
         try:
             self.start()
-            LOGGER.info("Listening on port %s", self.port)
             self.wait()
         except KeyboardInterrupt:
-            LOGGER.info('Stopping server...')
             self.stop(grace=grace)
-
-        LOGGER.info("Server stopped")

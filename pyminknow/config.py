@@ -3,9 +3,9 @@ DEFAULT_PORT = 9501
 GRACE = 5  # seconds
 
 PROTOCOLS = (
-    'V1',
-    'V2',
-    'V3',
+    'PROTOCOL_A',
+    'PROTOCOL_B',
+    'PROTOCOL_C',
 )
 
 DATA_DIR = '/data'
@@ -13,3 +13,4 @@ DATA_DIR = '/data'
 PRODUCT_CODE = 'MIN-101B-FAKE'
 DESCRIPTION = 'Fake MinIT'
 SERIAL = 'FAKE-0123456789'
+FLOW_CELL_ID = 'FLO-MIN000'
