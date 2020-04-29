@@ -129,11 +129,11 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
             minknow.rpc.protocol_pb2.ProtocolInfo(
                 identifier=protocol_name,
                 name=protocol_name,
-                tags=dict(
-                    flow_cell=minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value ="FLO-MIN106"),
-                    kit=minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value ="SQK-LSK109"),
-                    experiment_type=minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value ="sequencing"),
-                )
+                tags={
+                    'flow_cell': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="FLO-MIN106"),
+                    'kit': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="SQK-LSK109"),
+                    'experiment type': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="sequencing"),
+                }
             ) for protocol_name in pyminknow.config.PROTOCOLS
         ]
 
