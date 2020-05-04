@@ -137,8 +137,12 @@ class Run:
 
     @classmethod
     def make_run_id(cls) -> str:
-        """Generate random new run identifier"""
-        return uuid.uuid4().hex
+        """Generate protocol run identifier"""
+        now = datetime.datetime.utcnow()
+        day = now.date().strftime('%Y%m%d')
+        clock_time = now.strftime('%H%M')
+        unique = str(uuid.uuid4()).partition('-')[0]
+        return "{}_{}_X1_FAN47535_{}".format(day, clock_time, unique)
 
     @classmethod
     def build_user_info(cls, protocol_group_id: str, sample_id: str):
@@ -183,7 +187,7 @@ class Run:
             _path.stem for _path in
             # Sort by creation time
             sorted(pathlib.Path(pyminknow.config.RUN_DIR).glob('*.{}'.format(cls.SERIALISATION_EXT)),
-                   key=lambda _path: _path.stat().st_birthtime)
+                   key=lambda _path: _path.stat().st_ctime)
         )
 
     @classmethod
