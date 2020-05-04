@@ -9,6 +9,7 @@ PROTOCOLS = (
 )
 
 DATA_DIR = '/data'
+RUN_DIR = '~/runs'
 
 PRODUCT_CODE = 'MIN-101B-FAKE'
 DESCRIPTION = 'Fake MinIT'
