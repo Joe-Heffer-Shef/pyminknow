@@ -21,7 +21,8 @@ COPY .ssh/id_rsa.pub .ssh/
 RUN cat .ssh/id_rsa.pub >> /home/minit/.ssh/authorized_keys
 
 # Create sequencer data directory
-RUN mkdir /data && chown minknow:minknow /data
+ENV MINKNOW_DATA_DIR=/data
+RUN mkdir /data && chown minknow:minknow $MINKNOW_DATA_DIR
 
 # Install Python packages
 RUN pip install pyminknow

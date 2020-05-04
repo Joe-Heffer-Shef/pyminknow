@@ -26,7 +26,7 @@ def build_timestamp(timestamp=None) -> google.protobuf.timestamp_pb2.Timestamp:
 
 class Run:
     """Protocol run (dummy)"""
-    SERIALISATION_EXT = '.pkl'
+    SERIALISATION_EXT = 'pkl'
 
     def __init__(self, protocol_id: str, user_info: minknow.rpc.protocol_pb2.ProtocolRunUserInfo, args: list):
         self._state = None
@@ -67,8 +67,7 @@ class Run:
 
     def serialise(self):
         os.makedirs(pyminknow.config.RUN_DIR, exist_ok=True)
-        from pprint import pprint
-        pprint(self.as_dict)
+
         with open(self.path, 'wb') as file:
             pickle.dump(self.as_dict, file)
 
