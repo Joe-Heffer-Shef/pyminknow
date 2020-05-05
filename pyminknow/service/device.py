@@ -26,21 +26,25 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
 
     @property
     def flow_cell(self):
-        flow_cell = self.device.get('flow_cell')
-        return flow_cell or dict(has_flow_cell=False)
+        return self.device.get('flow_cell')
 
     def get_flow_cell_info(self, request, context):
-        return minknow.rpc.device_pb2.GetFlowCellInfoResponse(
-            has_flow_cell=True,
-            flow_cell_id=self.flow_cell['flow_cell_id'],
-            channel_count=512,
-            wells_per_channel=4,
-            asic_id=5287869,
-            product_code="FLO-MIN106",
-            temperature_offset=327.6700134277344,
-            asic_version="IA02D",
-            asic_id_str="5287869",
-        )
+        if self.flow_cell:
+            data = dict(
+                has_flow_cell=True,
+                flow_cell_id=self.flow_cell['flow_cell_id'],
+                channel_count=512,
+                wells_per_channel=4,
+                asic_id=5287869,
+                product_code="FLO-MIN106",
+                temperature_offset=327.6700134277344,
+                asic_version="IA02D",
+                asic_id_str="5287869",
+            )
+        else:
+            data = dict(has_flow_cell=False)
+
+        return minknow.rpc.device_pb2.GetFlowCellInfoResponse(**data)
 
     def get_device_info(self, request, context):
         # https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/device.proto#L109
