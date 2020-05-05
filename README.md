@@ -2,6 +2,14 @@
 
 This code will emulate a [Oxford Nanopore Technologies](https://nanoporetech.com/) gene sequencing device (e.g. [minION](https://nanoporetech.com/products/minion) or minKNOW) using its gRPC Remote Procedure Calls [LIMS interface](https://github.com/nanoporetech/minknow_lims_interface) to interact with its embedded software. This package is designed to form part of a software development environment to facilitate rapid prototyping and automated testing.
 
+## Glossary
+
+* **minKNOW** device manager (host software)
+* **gridION** a physical device containing an array of sequencing devices
+* **minION** a physical sequencing device
+
+## See also
+
 * Developed at The University of Sheffield, IT Services, [Research & Innovation](https://www.sheffield.ac.uk/it-services/research).
 * [pyminknow](https://pypi.org/project/pyminknow/) at PyPi
 

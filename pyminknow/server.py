@@ -3,11 +3,14 @@ import logging
 
 import grpc
 
+import pyminknow.config
 import pyminknow.service.device
 import pyminknow.service.manager
 import pyminknow.service.protocol
 
 LOGGER = logging.getLogger(__name__)
+
+MAX_WORKERS = 100
 
 
 class Server:
@@ -17,33 +20,47 @@ class Server:
         pyminknow.service.manager.ManagerService,
     }
 
-    def __init__(self, port: int):
-        self.port = port
-        self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
-        self.server = grpc.server(thread_pool=self.thread_pool)
-        self.server.add_insecure_port('[::]:{port}'.format(port=port))
+    def __init__(self, device_port: int):
+        self.port = device_port
+        self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS)
+        self.servers = list()
 
-        # Register services
-        for Service in self.SERVICES:
-            servicer = Service()
-            servicer.add_to_server(self.server)
-            LOGGER.info('Registered %s', Service.__name__)
+        # Create manager service
+        server = grpc.server(thread_pool=self.thread_pool)
+        server.add_insecure_port('[::]:{port}'.format(port=device_port))
+        manager_servicer = pyminknow.service.manager.ManagerService()
+        manager_servicer.add_to_server(server)
+        self.servers.append(server)
+
+        # Devices
+        for device in pyminknow.config.DEVICES:
+            device_port = device['ports']['insecure']
+            server = grpc.server(thread_pool=self.thread_pool)
+            server.add_insecure_port('[::]:{port}'.format(port=device_port))
+            pyminknow.service.protocol.ProtocolService().add_to_server(server)
+            device_servicer = pyminknow.service.device.DeviceService(device=device)
+            device_servicer.add_to_server(server)
+            self.servers.append(server)
+
+            LOGGER.info("Added insecure port %s for device %s", device_port, device['name'])
 
     def start(self):
-        self.server.start()
+        for server in self.servers:
+            server.start()
         LOGGER.info("Listening on port %s", self.port)
 
     def stop(self, grace: float):
         LOGGER.info('Stopping server...')
-        self.server.stop(grace=grace)
+        for server in self.servers:
+            server.stop(grace=grace)
         LOGGER.info("Server stopped")
 
     def wait(self):
-        self.server.wait_for_termination()
+        for server in self.servers:
+            server.wait_for_termination()
 
     def serve(self, grace: float):
         """Run the server"""
-
         try:
             self.start()
             self.wait()

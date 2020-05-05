@@ -1,7 +1,5 @@
 import logging
 import warnings
-import random
-import socket
 
 import minknow.rpc.manager_pb2
 import minknow.rpc.manager_pb2_grpc
@@ -14,6 +12,8 @@ LOGGER = logging.getLogger(__name__)
 class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     """
     Manager service
+
+    https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/manager.proto
     """
     add_to_server = minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server
 
@@ -22,48 +22,53 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
             product_code=pyminknow.config.PRODUCT_CODE,
             description=pyminknow.config.DESCRIPTION,
             serial=pyminknow.config.SERIAL,
-            network_name=socket.gethostname(),
+            network_name=pyminknow.config.NETWORK_NAME,
         )
 
     @property
-    def active(self) -> list:
+    def active_devices(self) -> list:
         return [
             minknow.rpc.manager_pb2.ListDevicesResponse.ActiveDevice(
-                name='MN0000',
-                layout=minknow.rpc.manager_pb2.ListDevicesResponse.DeviceLayout(x=3, y=4),
-                ports=minknow.rpc.manager_pb2.ListDevicesResponse.RpcPorts(insecure_grpc=9501)
+                name=device['name'],
+                layout=minknow.rpc.manager_pb2.ListDevicesResponse.DeviceLayout(**device['layout']),
+                ports=minknow.rpc.manager_pb2.ListDevicesResponse.RpcPorts(
+                    insecure_grpc=device['ports']['insecure'],
+                    secure=device['ports']['secure'],
+                )
             )
+            for device in pyminknow.config.DEVICES
         ]
 
     def list_devices(self, request, context):
         warnings.warn('Use `flow_cell_positions` instead', DeprecationWarning)
 
-        return minknow.rpc.manager_pb2.ListDevicesResponse(active=self.active)
+        return minknow.rpc.manager_pb2.ListDevicesResponse(
+            active=self.active_devices,
+            inactive=list(),
+            pending=list(),
+        )
 
     def flow_cell_positions(self, request, context) -> iter:
-        """
-        Provides a snapshot of places where users can insert flow cells.
-        """
+        """Provides a snapshot of places where users can insert flow cells."""
 
-        # Get random state
-        possible_states = minknow.rpc.manager_pb2.FlowCellPosition.State.keys()
-        state = random.choice(possible_states)
+        positions = self._flow_cell_positions
 
-        flow_cell_positions = [
+        yield minknow.rpc.manager_pb2.FlowCellPositionsResponse(
+            total_count=len(positions),
+            positions=positions,
+        )
+
+    @property
+    def _flow_cell_positions(self) -> list:
+        state_name = 'STATE_RUNNING'
+        state = minknow.rpc.manager_pb2.FlowCellPosition.State.Value(state_name)
+
+        return [
             minknow.rpc.manager_pb2.FlowCellPosition(
-                name='MN0000',
-                location=minknow.rpc.manager_pb2.FlowCellPosition.Location(x=8, y=2),
+                name=device['name'],
+                location=minknow.rpc.manager_pb2.FlowCellPosition.Location(**device['layout']),
                 state=state,
-                rpc_ports=minknow.rpc.manager_pb2.FlowCellPosition.RpcPorts(insecure=9501),
-            ),
+                rpc_ports=minknow.rpc.manager_pb2.FlowCellPosition.RpcPorts(**device['ports']),
+                error_info='',
+            ) for device in pyminknow.config.DEVICES
         ]
-
-        total_count = len(flow_cell_positions)
-
-        for flow_cell_position in flow_cell_positions:
-            response = minknow.rpc.manager_pb2.FlowCellPositionsResponse(
-                total_count=total_count,
-                positions=[flow_cell_position],
-            )
-
-            yield response

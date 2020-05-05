@@ -82,8 +82,6 @@ class Run:
             args=data.pop('args'),
         )
 
-        # run.state = minknow.rpc.protocol_pb2.ProtocolState(data.pop('state'))
-
         for attr, value in data.items():
             setattr(run, attr, value)
 
@@ -152,20 +150,23 @@ class Run:
             self.run_id,
         )
 
-    @classmethod
-    def make_run_id(cls) -> str:
+    @property
+    def data_subdir(self):
         """
         Generate protocol run identifier
         e.g. "DATE_TIME_DEVICE_FLOWCELLID_PARTOFAQUISITIONID"
         """
         device_id = pyminknow.config.PRODUCT_CODE
         flow_cell_id = pyminknow.config.FLOW_CELL_ID
-        now = datetime.datetime.utcnow()
-        day = now.date().strftime('%Y%m%d')
-        clock_time = now.strftime('%H%M')
-        unique = str(uuid.uuid4()).partition('-')[0]
+        day = self.start_time.date().strftime('%Y%m%d')
+        clock_time = self.start_time.strftime('%H%M')
+        unique = self.run_id.partition('-')[0]
         return "{day}_{time}_{device}_{flow_cell}_{acq}".format(day=day, time=clock_time, device=device_id,
                                                                 flow_cell=flow_cell_id, acq=unique)
+
+    @classmethod
+    def make_run_id(cls) -> str:
+        return str(uuid.uuid4())
 
     @classmethod
     def build_user_info(cls, protocol_group_id: str, sample_id: str):

@@ -17,7 +17,9 @@ import pyminknow.config
 LOGGER = logging.getLogger(__name__)
 
 DESCRIPTION = """
-This is a client to test a Nanopore minKNOW gene sequencing device by using its gRPC interface.
+This is a client to test a Nanopore gene sequencing device by using its gRPC interface.
+
+Some commands are run against the manager (minKNOW) and some against a device (a mini
 """
 
 USAGE = "python -m pyminknow.client"
@@ -73,18 +75,9 @@ class ManagerClient(RpcClient):
 
     stub_name = 'manager'
 
-    def describe_host(self, **kwargs) -> dict:
+    def describe_host(self, **kwargs) -> minknow.rpc.manager_pb2.DescribeHostResponse:
         request = minknow.rpc.manager_pb2.DescribeHostRequest()
-        response = self.stub.describe_host(request, **kwargs)
-
-        # return dict(
-        #     product_code=response.product_code,
-        #     description=response.description,
-        #     serial=response.serial,
-        #     network_name=response.network_name,
-        # )
-
-        return response
+        return self.stub.describe_host(request, **kwargs)
 
     def list_devices(self, **kwargs):
         warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
@@ -144,7 +137,7 @@ class ProtocolClient(RpcClient):
     def latest_run_id(self) -> int:
         return self.list_protocol_runs()[0]
 
-    def get_run_info_by_id(self, run_id: str = None):
+    def get_run_info(self, run_id: str = None) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
         # Get latest run ID
         if run_id is None:
             run_id = self.latest_run_id
@@ -168,24 +161,40 @@ class DeviceClient(RpcClient):
         state_name = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState.Name(response.device_state)
         LOGGER.info("Device status: %s => '%s'", response.device_state, state_name)
 
-        return state_name
+        return response
+
+    def get_device_info(self) -> minknow.rpc.device_pb2.GetDeviceInfoResponse:
+        request = minknow.rpc.device_pb2.GetDeviceInfoRequest()
+        return self.stub.get_device_info(request)
+
+    def get_flow_cell_info(self) -> minknow.rpc.device_pb2.GetFlowCellInfoResponse:
+        request = minknow.rpc.device_pb2.GetFlowCellInfoRequest()
+        response = self.stub.get_flow_cell_info(request)
+        LOGGER.info("has_flow_cell: %s", response.has_flow_cell)
+        return response
 
 
 def get_args():
+    # TODO separate into separate clients for each service
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Debug logging')
     parser.add_argument('-o', '--host', default=pyminknow.config.DEFAULT_HOST, help='Connect to this host')
     parser.add_argument('-p', '--port', type=int, default=pyminknow.config.DEFAULT_PORT, help='Connect to this port')
+    parser.add_argument('-e', '--describe_host', action='store_true', help='Describe manager host')
     parser.add_argument('-s', '--device_state', action='store_true', help='Get device state')
+    parser.add_argument('-q', '--device_info', action='store_true', help='Get device information')
     parser.add_argument('-l', '--list_protocols', action='store_true', help='List available protocols')
-    parser.add_argument('-d', '--list_devices', action='store_true', help='List available devices')
+    parser.add_argument('-d', '--list_devices', action='store_true', help='List available devices (Manager)')
+    parser.add_argument('-w', '--flow_cell_info', action='store_true', help='Get flow cell info (Device)')
     parser.add_argument('-f', '--flow_cell_positions', action='store_true',
-                        help='List all known positions where flow cells can be inserted')
+                        help='List all known positions where flow cells can be inserted (Manager)')
     parser.add_argument('-i', '--start_protocol', help='Start a protocol given by this identifier')
     parser.add_argument('-g', '--protocol_group_id', help='The group which the experiment should be held in')
     parser.add_argument('-r', '--list_protocol_runs', action='store_true',
                         help='List previously started protocol run IDs, in order of starting')
+    parser.add_argument('-u', '--get_run_info', action='store_true', help="Get run info (Protocol)")
+    parser.add_argument('-n', '--run_id', help="Protocol run identifier")
 
     return parser, parser.parse_args()
 
@@ -215,22 +224,31 @@ def main():
 
     with connect(host=args.host, port=args.port) as channel:
 
-        manager_client = ManagerClient(channel)
-
-        LOGGER.info(manager_client.describe_host())
-
         # Device
-        if args.device_state:
+        if args.device_state or args.device_info or args.flow_cell_info:
             client = DeviceClient(channel)
-            print(client.get_device_state())
+            if args.device_state:
+                print(client.get_device_state())
+            elif args.device_info:
+                print(client.get_device_info())
+            elif args.flow_cell_info:
+                print(client.get_flow_cell_info())
+
+            else:
+                raise ValueError('Unknown command')
 
         # Protocol
-        elif args.list_protocols or args.start_protocol or args.list_protocol_runs:
+        elif args.list_protocols or args.start_protocol or args.list_protocol_runs or args.get_run_info:
             client = ProtocolClient(channel)
 
             if args.list_protocols:
                 for protocol in client.list_protocols().protocols:
                     print(protocol)
+
+            elif args.get_run_info:
+                print(client.get_run_info(args.run_id))
+
+            # Launch new protocol run
             elif args.start_protocol:
                 run_id = client.start_protocol(
                     identifier=args.start_protocol,
@@ -245,7 +263,7 @@ def main():
                     ],
                 )
                 LOGGER.info("Started run ID: %s", run_id)
-                run_info = client.get_run_info_by_id(run_id)
+                run_info = client.get_run_info(run_id)
                 print(run_info)
             elif args.list_protocol_runs:
                 run_ids = client.list_protocol_runs()
@@ -254,16 +272,22 @@ def main():
                 raise ValueError('Unknown command')
 
         # Manager
-        elif args.list_devices or args.flow_cell_positions:
+        elif args.list_devices or args.flow_cell_positions or args.describe_host:
+
+            client = ManagerClient(channel)
 
             if args.list_devices:
-                devices = manager_client.list_devices()
-                LOGGER.info("Found %s active devices", len(devices.active))
-                for device in devices.active:
+                response = client.list_devices()
+                LOGGER.info("Found %s active devices", len(response.active))
+                for device in response.active:
                     print(device)
 
+            elif args.describe_host:
+                response = client.describe_host()
+                print(response)
+
             elif args.flow_cell_positions:
-                for item in manager_client.flow_cell_positions():
+                for item in client.flow_cell_positions():
                     print(item)
 
             else:
