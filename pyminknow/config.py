@@ -3,7 +3,7 @@ import pathlib
 
 # Server settings
 DEFAULT_HOST = 'localhost'
-DEFAULT_PORT = 9501
+DEFAULT_PORT = os.getenv('GRPC_INSECURE_PORT', 9501)
 GRACE = 1  # seconds
 
 # Data directories

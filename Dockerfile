@@ -7,7 +7,8 @@ version=0.0.2
 RUN useradd minknow --create-home
 WORKDIR /home/minknow
 
-EXPOSE 9501 22
+ENV GRPC_INSECURE_PORT=9501
+EXPOSE $GRPC_INSECURE_PORT 22
 
 # Get security updates and install packages
 RUN apt-get update && apt-get --yes install openssh-server rsync \
