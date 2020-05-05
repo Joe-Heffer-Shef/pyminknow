@@ -1,5 +1,6 @@
 import logging
 import uuid
+import time
 import datetime
 import warnings
 import os.path
@@ -132,6 +133,10 @@ class Run:
         self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
 
     @property
+    def is_complete(self) -> bool:
+        return self.state == minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
+
+    @property
     def output_directory(self):
         return os.path.join(pyminknow.config.DATA_DIR, self.run_id)
 
@@ -168,7 +173,7 @@ class Run:
         self._end_time = value
 
     @property
-    def run_info(self):
+    def run_info(self) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
         return minknow.rpc.protocol_pb2.ProtocolRunInfo(
             protocol_id=self.protocol_id,
             args=self.args,
@@ -177,7 +182,12 @@ class Run:
             start_time=self.start_time,
             end_time=self.end_time,
             user_info=self.user_info,
+            acquisition_run_ids=self.acquisition_run_ids,
         )
+
+    @property
+    def acquisition_run_ids(self) -> list:
+        return [str(uuid.uuid4()) for _ in range(3)]
 
     @classmethod
     def get_run_ids(cls):
@@ -198,6 +208,8 @@ class Run:
 class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     """
     Protocol service
+
+    https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/protocol.proto
     """
     add_to_server = minknow.rpc.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
 
@@ -277,3 +289,14 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     def list_protocol_runs(self, request, context):
         """List previously started protocol run ids (including any current protocol), in order of starting."""
         return minknow.rpc.protocol_pb2.ListProtocolRunsResponse(run_ids=self.run_ids)
+
+    def wait_for_finished(self, request, context) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
+
+        run = Run.deserialise(request.run_id)
+
+        while True:
+
+            if run.is_complete:
+                return run.run_info
+
+            time.sleep(1)
