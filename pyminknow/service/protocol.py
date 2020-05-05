@@ -142,12 +142,13 @@ class Run:
     def output_directory(self) -> str:
         """
         The directory to save the sequencing data
-        e.g. "/data/workflow_run_id/workflow_run_id/protcol_run_id"
+        e.g. "/data/external_run_id/external_run_id/protcol_run_id"
         """
+        external_run_id = str(self.user_info.protocol_group_id)
         return os.path.join(
             pyminknow.config.DATA_DIR,
-            self.user_info.protocol_group_id,
-            self.user_info.protocol_group_id,
+            external_run_id,
+            external_run_id,
             self.run_id,
         )
 
