@@ -26,7 +26,8 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
 
     @property
     def flow_cell(self):
-        return self.device['flow_cell']
+        flow_cell = self.device.get('flow_cell')
+        return flow_cell or dict(has_flow_cell=False)
 
     def get_flow_cell_info(self, request, context):
         return minknow.rpc.device_pb2.GetFlowCellInfoResponse(
