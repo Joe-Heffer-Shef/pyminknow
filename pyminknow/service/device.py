@@ -52,8 +52,8 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
             can_set_temperature=True,
             digitisation=8192,
             location_defined=True,
-            firmware_version=minknow.rpc.device_pb2.GetDeviceInfoResponse(
+            firmware_version=[minknow.rpc.device_pb2.GetDeviceInfoResponse.ComponentVersion(
                 component='GridION FPGA',
                 version='1.1.3',
-            )
+            )],
         )
