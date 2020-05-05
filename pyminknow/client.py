@@ -128,6 +128,12 @@ class ProtocolClient(RpcClient):
 
         return response.run_id
 
+    def set_sample_id(self, sample_id: str) -> minknow.rpc.protocol_pb2.SetSampleIdResponse:
+        warnings.warn('The sample_id should be set in the request when a protocol starts ( start_protocol() )',
+                      DeprecationWarning)
+        request = minknow.rpc.protocol_pb2.SetSampleIdRequest(sample_id=sample_id)
+        return self.stub.set_sample_id(request)
+
     def list_protocol_runs(self) -> list:
         request = minknow.rpc.protocol_pb2.ListProtocolRunsRequest()
         response = self.stub.list_protocol_runs(request)
@@ -145,6 +151,15 @@ class ProtocolClient(RpcClient):
         request = minknow.rpc.protocol_pb2.GetRunInfoRequest(run_id=run_id)
         return self.stub.get_run_info(request)
 
+    def wait_for_finished(self, run_id: str, state: int = 0,
+                          timeout: int = None) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
+        request = minknow.rpc.protocol_pb2.WaitForFinishedRequest(
+            run_id=run_id,
+            state=state,
+            timeout=timeout,
+        )
+        return self.stub.wait_for_finished(request)
+
 
 class DeviceClient(RpcClient):
     """
@@ -153,7 +168,7 @@ class DeviceClient(RpcClient):
 
     stub_name = 'device'
 
-    def get_device_state(self) -> str:
+    def get_device_state(self) -> minknow.rpc.device_pb2.GetDeviceStateResponse:
         request = minknow.rpc.device_pb2.GetDeviceStateRequest()
         response = self.stub.get_device_state(request)
 
