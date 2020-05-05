@@ -87,8 +87,7 @@ class ManagerClient(RpcClient):
 
     def flow_cell_positions(self, **kwargs) -> iter:
         request = minknow.rpc.manager_pb2.FlowCellPositionsRequest()
-        for response in self.stub.flow_cell_positions(request, **kwargs):
-            yield from response.positions
+        yield from self.stub.flow_cell_positions(request, **kwargs)
 
 
 class ProtocolClient(RpcClient):

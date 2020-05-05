@@ -2,7 +2,7 @@
 To build from source:
 
 $ python setup.py sdist bdist_wheel
-$ twine upload
+$ twine upload dist/pyminknow-*
 """
 
 import setuptools
@@ -12,7 +12,7 @@ with open('README.md') as file:
 
 setuptools.setup(
     name='pyminknow',
-    version='0.1.3',
+    version='0.1.4',
     author="Joe Heffer",
     author_email="j.heffer@sheffield.ac.uk",
     description="This service mimics a Nanopore minKNOW gene sequencing device by using its gRPC interface.",
