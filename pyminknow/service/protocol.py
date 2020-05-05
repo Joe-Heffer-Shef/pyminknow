@@ -1,18 +1,17 @@
-import logging
-import uuid
-import time
 import datetime
-import warnings
+import logging
 import os.path
-import pickle
 import pathlib
+import pickle
+import time
+import uuid
+import warnings
 
-import google.protobuf.wrappers_pb2
 import google.protobuf.timestamp_pb2
+import google.protobuf.wrappers_pb2
 
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
-
 import pyminknow.config
 
 LOGGER = logging.getLogger(__name__)
@@ -29,23 +28,24 @@ class Run:
     """Protocol run (dummy)"""
     SERIALISATION_EXT = 'pkl'
 
-    def __init__(self, protocol_id: str, user_info: minknow.rpc.protocol_pb2.ProtocolRunUserInfo, args: list):
+    def __init__(self, run_id: str = None, protocol_id: str = None, user_info=None, args: list = None,
+                 device: dict = None):
+        self.run_id = run_id or self.make_run_id()
         self._state = None
-        self.run_id = self.make_run_id()
         self.protocol_id = protocol_id
         self.user_info = user_info
-        self.args = list(args)
+        self.args = list(args or ())
         self.start_time = datetime.datetime.utcnow()
         self.end_time = None
+        self.device = device
 
-        LOGGER.debug("Starting run ID: %s", self.run_id)
-        LOGGER.debug("Protocol group ID: %s", user_info.protocol_group_id.value)
-        LOGGER.debug("Sample ID: %s", user_info.sample_id.value)
+    @property
+    def serialisation_dir(self) -> str:
+        return self.build_serialisation_dir(device=self.device)
 
-    @classmethod
-    def build_path(cls, run_id):
-        filename = "{name}.{ext}".format(name=run_id, ext=cls.SERIALISATION_EXT)
-        return os.path.join(pyminknow.config.RUN_DIR, filename)
+    @property
+    def filename(self) -> str:
+        return "{name}.{ext}".format(name=self.run_id, ext=self.SERIALISATION_EXT)
 
     @property
     def as_dict(self) -> dict:
@@ -60,44 +60,41 @@ class Run:
             args=self.args,
             start_time=self.start_time,
             end_time=self.end_time,
+            device=self.device,
         )
 
     @property
-    def path(self):
-        return self.build_path(self.run_id)
+    def path(self) -> str:
+        return os.path.join(self.serialisation_dir, self.filename)
+
+    @classmethod
+    def build_serialisation_dir(cls, device: dict) -> str:
+        return os.path.join(pyminknow.config.RUN_DIR, device['name'])
 
     def serialise(self):
-        os.makedirs(pyminknow.config.RUN_DIR, exist_ok=True)
+        os.makedirs(self.serialisation_dir, exist_ok=True)
 
         with open(self.path, 'wb') as file:
             pickle.dump(self.as_dict, file)
 
             LOGGER.info("Wrote '%s'", file.name)
 
-    @classmethod
-    def from_dict(cls, data: dict):
-        run = Run(
-            protocol_id=data.pop('protocol_id'),
-            user_info=cls.build_user_info(**data.pop('user_info')),
-            args=data.pop('args'),
-        )
+    def from_dict(self, data: dict):
+        self.user_info = self.build_user_info(**data.pop('user_info'))
 
         for attr, value in data.items():
-            setattr(run, attr, value)
+            setattr(self, attr, value)
 
-        return run
-
-    @classmethod
-    def deserialise(cls, run_id: str):
-        path = cls.build_path(run_id)
-        with open(path, 'rb') as file:
+    def load(self) -> dict:
+        with open(self.path, 'rb') as file:
             data = pickle.load(file)
 
             LOGGER.debug("Read '%s'", file.name)
 
-        run = cls.from_dict(data)
+            return data
 
-        return run
+    def deserialise(self):
+        self.from_dict(self.load())
 
     def save_data(self):
         """Write sequence data to disk"""
@@ -121,10 +118,16 @@ class Run:
     def state(self, state):
         """Change state"""
         self._state = state
+        LOGGER.debug('Run %s changed state to %s', self.run_id, self.state)
         self.serialise()
 
     def start(self):
         self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_RUNNING
+
+        LOGGER.debug("Starting run ID: %s", self.run_id)
+        LOGGER.debug("Protocol group ID: %s", self.user_info.protocol_group_id.value)
+        LOGGER.debug("Sample ID: %s", self.user_info.sample_id.value)
+
         self.save_data()
         self.finish()
 
@@ -156,8 +159,8 @@ class Run:
         Generate protocol run identifier
         e.g. "DATE_TIME_DEVICE_FLOWCELLID_PARTOFAQUISITIONID"
         """
-        device_id = pyminknow.config.PRODUCT_CODE
-        flow_cell_id = pyminknow.config.FLOW_CELL_ID
+        device_id = self.device['name']
+        flow_cell_id = self.device['flow_cell']['flow_cell_id']
         day = self.start_time.date().strftime('%Y%m%d')
         clock_time = self.start_time.strftime('%H%M')
         unique = self.run_id.partition('-')[0]
@@ -209,19 +212,20 @@ class Run:
         return [str(uuid.uuid4()) for _ in range(3)]
 
     @classmethod
-    def get_run_ids(cls):
+    def get_run_ids(cls, device: dict):
         """Chronological order (by start time ascending)"""
+        directory = cls.build_serialisation_dir(device=device)
+        paths = pathlib.Path(directory).glob('*.{}'.format(cls.SERIALISATION_EXT))
         yield from (
             # remove file ext
             _path.stem for _path in
             # Sort by creation time
-            sorted(pathlib.Path(pyminknow.config.RUN_DIR).glob('*.{}'.format(cls.SERIALISATION_EXT)),
-                   key=lambda _path: _path.stat().st_ctime)
+            sorted(paths, key=lambda _path: _path.stat().st_ctime)
         )
 
     @classmethod
-    def latest_run_id(cls) -> str:
-        return next(cls.get_run_ids())
+    def latest_run_id(cls, device: dict) -> str:
+        return next(cls.get_run_ids(device))
 
 
 class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
@@ -231,6 +235,10 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/protocol.proto
     """
     add_to_server = minknow.rpc.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
+
+    def __init__(self, *args, device: dict, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.device = device
 
     def list_protocols(self, request, context):
         if request.force_reload:
@@ -258,12 +266,11 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
             ) for protocol_name in pyminknow.config.PROTOCOLS
         ]
 
-    @classmethod
-    def _start_protocol(cls, identifier, user_info, args):
+    def _start_protocol(self, identifier, user_info, args):
         """Emulate a real process running"""
         LOGGER.info("Starting protocol %s (Args: %s)", identifier, args)
 
-        run = Run(protocol_id=identifier, user_info=user_info, args=args)
+        run = Run(protocol_id=identifier, user_info=user_info, args=args, device=self.device.copy())
         run.start()
 
         return run.run_id
@@ -277,11 +284,11 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     @property
     def latest_run_id(self):
         """The identifier of the most recently-started run"""
-        return Run.latest_run_id()
+        return Run.latest_run_id(device=self.device)
 
     @property
     def run_ids(self) -> list:
-        return list(Run.get_run_ids())
+        return list(Run.get_run_ids(device=self.device))
 
     def get_run_info(self, request, context):
         run_id = request.run_id
@@ -290,7 +297,8 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         if not run_id:
             run_id = self.latest_run_id
 
-        run = Run.deserialise(run_id=run_id)
+        run = Run(run_id=run_id, device=self.device)
+        run.deserialise()
 
         return run.info
 
@@ -311,7 +319,8 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
     def wait_for_finished(self, request, context) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
 
-        run = Run.deserialise(request.run_id)
+        run = Run(run_id=request.run_id, device=self.device)
+        run.deserialise()
 
         while True:
 

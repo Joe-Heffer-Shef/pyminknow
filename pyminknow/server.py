@@ -37,7 +37,7 @@ class Server:
             device_port = device['ports']['insecure']
             server = grpc.server(thread_pool=self.thread_pool)
             server.add_insecure_port('[::]:{port}'.format(port=device_port))
-            pyminknow.service.protocol.ProtocolService().add_to_server(server)
+            pyminknow.service.protocol.ProtocolService(device=device).add_to_server(server)
             device_servicer = pyminknow.service.device.DeviceService(device=device)
             device_servicer.add_to_server(server)
             self.servers.append(server)
