@@ -104,8 +104,10 @@ class Run:
     def save_data(self):
         """Write sequence data to disk"""
 
-        path = os.path.join(self.output_directory, 'my_data.txt')
+        filename = 'my_data.txt'
+        path = os.path.join(self.output_directory, filename)
 
+        # Write to disk
         os.makedirs(self.output_directory, exist_ok=True)
         with open(path, 'w') as file:
             # Generate some dummy data
@@ -137,17 +139,32 @@ class Run:
         return self.state == minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
 
     @property
-    def output_directory(self):
-        return os.path.join(pyminknow.config.DATA_DIR, self.run_id)
+    def output_directory(self) -> str:
+        """
+        The directory to save the sequencing data
+        e.g. "/data/workflow_run_id/workflow_run_id/protcol_run_id"
+        """
+        return os.path.join(
+            pyminknow.config.DATA_DIR,
+            self.user_info.protocol_group_id,
+            self.user_info.protocol_group_id,
+            self.run_id,
+        )
 
     @classmethod
     def make_run_id(cls) -> str:
-        """Generate protocol run identifier"""
+        """
+        Generate protocol run identifier
+        e.g. "DATE_TIME_DEVICE_FLOWCELLID_PARTOFAQUISITIONID"
+        """
+        device_id = pyminknow.config.PRODUCT_CODE
+        flow_cell_id = pyminknow.config.FLOW_CELL_ID
         now = datetime.datetime.utcnow()
         day = now.date().strftime('%Y%m%d')
         clock_time = now.strftime('%H%M')
         unique = str(uuid.uuid4()).partition('-')[0]
-        return "{}_{}_X1_FAN47535_{}".format(day, clock_time, unique)
+        return "{day}_{time}_{device}_{flow_cell}_{acq}".format(day=day, time=clock_time, device=device_id,
+                                                                flow_cell=flow_cell_id, acq=unique)
 
     @classmethod
     def build_user_info(cls, protocol_group_id: str, sample_id: str):
@@ -173,7 +190,7 @@ class Run:
         self._end_time = value
 
     @property
-    def run_info(self) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
+    def info(self) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
         return minknow.rpc.protocol_pb2.ProtocolRunInfo(
             protocol_id=self.protocol_id,
             args=self.args,
@@ -273,7 +290,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         run = Run.deserialise(run_id=run_id)
 
-        return run.run_info
+        return run.info
 
     def set_sample_id(self, request, context):
         """
@@ -297,6 +314,6 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         while True:
 
             if run.is_complete:
-                return run.run_info
+                return run.info
 
             time.sleep(1)
