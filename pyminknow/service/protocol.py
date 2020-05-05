@@ -239,6 +239,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     def __init__(self, *args, device: dict, **kwargs):
         super().__init__(*args, **kwargs)
         self.device = device
+        self.sample_id = None
 
     def list_protocols(self, request, context):
         if request.force_reload:
@@ -309,7 +310,9 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         warnings.warn('The sample_id should be set in the request when a protocol starts', DeprecationWarning)
 
-        LOGGER.debug('Sample ID: %s', request.sample_id)
+        self.sample_id = request.sample_id
+
+        LOGGER.debug('Sample ID: %s', self.sample_id)
 
         return minknow.rpc.protocol_pb2.SetSampleIdResponse()
 
