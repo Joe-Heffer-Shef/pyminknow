@@ -257,12 +257,15 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         """Build collection of ProtocolInfo objects"""
         return [
             minknow.rpc.protocol_pb2.ProtocolInfo(
-                identifier=protocol_name,
+                identifier='sequencing/sequencing_MIN106_MIN107_RNA:FLO-MIN107:SQK-RNA002:True',
                 name=protocol_name,
                 tags={
                     'flow cell': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="FLO-MIN106"),
                     'kit': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="SQK-LSK109"),
                     'experiment type': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="sequencing"),
+                    'kit_category': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(
+                        string_value='[\"RNA\",\"PCR-Free\",\"No Multiplexing\"]'),
+                    'barcoding': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(bool_value=False),
                 }
             ) for protocol_name in pyminknow.config.PROTOCOLS
         ]
