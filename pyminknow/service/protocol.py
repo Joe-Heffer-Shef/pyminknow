@@ -5,7 +5,10 @@ import pathlib
 import pickle
 import time
 import uuid
+import json
 import warnings
+
+from collections import Iterable
 
 import google.protobuf.timestamp_pb2
 import google.protobuf.wrappers_pb2
@@ -253,21 +256,47 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         raise NotImplementedError
 
     @staticmethod
+    def tag_value(value) -> minknow.rpc.protocol_pb2.ProtocolInfo.TagValue:
+        """
+        Translate a value in a Python native data type to a ProtocolInfo.TagValue (protocol buffers data type)
+
+        https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/protocol.proto#L174
+        """
+
+        type_map = dict(
+            bool_value=bool,
+            string_value=str,
+            float_value=float,
+            int_value=int,
+            array_value=Iterable,
+        )
+
+        for arg, data_type in type_map.items():
+            if isinstance(value, data_type):
+
+                # Serialise arrays to JSON format
+                if arg == 'array_value':
+                    value = json.dumps(list(value))
+
+                kwargs = {arg: value}
+
+                return minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(**kwargs)
+
+        raise ValueError(value)
+
+    @staticmethod
     def get_protocol_info() -> list:
         """Build collection of ProtocolInfo objects"""
         return [
             minknow.rpc.protocol_pb2.ProtocolInfo(
-                identifier='sequencing/sequencing_MIN106_MIN107_RNA:FLO-MIN107:SQK-RNA002:True',
-                name=protocol_name,
-                tags={
-                    'flow cell': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="FLO-MIN106"),
-                    'kit': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="SQK-LSK109"),
-                    'experiment type': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(string_value="sequencing"),
-                    'kit_category': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(
-                        string_value='[\"RNA\",\"PCR-Free\",\"No Multiplexing\"]'),
-                    'barcoding': minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(bool_value=False),
-                }
-            ) for protocol_name in pyminknow.config.PROTOCOLS
+                identifier=protocol['identifier'],
+                name=protocol['name'],
+                tags={key: ProtocolService.tag_value(value) for key, value in protocol['tags'].items()},
+                tag_extraction_result=minknow.rpc.protocol_pb2.ProtocolInfo.TagExtractionResult(
+                    success=True,
+                    error_report='',
+                ),
+            ) for protocol in pyminknow.config.PROTOCOLS
         ]
 
     def _start_protocol(self, identifier, user_info, args):

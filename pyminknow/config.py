@@ -16,9 +16,39 @@ DESCRIPTION = 'GridION X5 (Mock)'
 SERIAL = 'GXB01484-MOCK'
 NETWORK_NAME = 'GXB01484-MOCK'
 PROTOCOLS = (
-    'PROTOCOL_A',
-    'PROTOCOL_B',
-    'PROTOCOL_C',
+    dict(
+        identifier='sequencing/sequencing_MIN106_MIN107_RNA:FLO-MIN106:SQK-RNA002:True',
+        name='sequencing/sequencing_MIN106_MIN107_RNA',
+        tags={
+            'experiment type': 'sequencing',
+            'flow cell': 'FLO-MIN106',
+            'kit': 'SQK-RNA002',
+            'kit_category': ['RNA', 'PCR-Free', 'No Multiplexing'],
+            'barcoding': False,
+        },
+    ),
+    dict(
+        identifier='sequencing/sequencing_MIN106_MIN107_RNA:FLO-MIN107:SQK-RNA002:True',
+        name='sequencing/sequencing_MIN106_MIN107_RNA',
+        tags={
+            'experiment type': 'sequencing',
+            'flow cell': 'FLO-MIN107',
+            'kit': 'SQK-RNA002',
+            'kit_category': ['RNA', 'PCR-Free', 'No Multiplexing'],
+            'barcoding': False,
+        },
+    ),
+    dict(
+        identifier='sequencing/sequencing_MIN106_DNA:FLO-MIN106:SQK-LSK109:True',
+        name='sequencing/sequencing_MIN106_DNA',
+        tags={
+            'experiment type': 'sequencing',
+            'flow cell': 'FLO-MIN106',
+            'kit': 'SQK-LSK109',
+            'kit_category': ['DNA', 'RNA', 'PCR', 'PCR-Free', 'No Multiplexing', 'Multiplexing'],
+            'barcoding': False,
+        },
+    ),
 )
 DEVICES = (
     dict(name='X1', layout=dict(x=0, y=0), ports=dict(secure=8013, insecure=8012),
