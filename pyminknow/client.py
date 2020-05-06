@@ -93,6 +93,8 @@ class ManagerClient(RpcClient):
 class ProtocolClient(RpcClient):
     """
     Protocol client
+
+    https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/protocol.proto
     """
 
     stub_name = 'protocol'
@@ -101,12 +103,13 @@ class ProtocolClient(RpcClient):
         request = minknow.rpc.protocol_pb2.ListProtocolsRequest()
         return self.stub.list_protocols(request)
 
-    def start_protocol(self, identifier: str, user_info: dict = None, args: list = None) -> str:
+    def start_protocol(self, identifier: str, user_info: dict = None,
+                       args: list = None) -> minknow.rpc.protocol_pb2.StartProtocolResponse:
         """
         :param identifier: Protocol ID
         :param user_info: User input describing the protocol (keys: protocol_group_id, sample_id)
         :param args: The arguments to pass to the protocol
-        :returns: Run ID
+        :returns: StartProtocolResponse(run_id)
         """
 
         user_info = user_info or dict()
@@ -123,9 +126,7 @@ class ProtocolClient(RpcClient):
             args=args,
         )
 
-        response = self.stub.start_protocol(request)
-
-        return response.run_id
+        return self.stub.start_protocol(request)
 
     def set_sample_id(self, sample_id: str) -> minknow.rpc.protocol_pb2.SetSampleIdResponse:
         warnings.warn('The sample_id should be set in the request when a protocol starts ( start_protocol() )',
