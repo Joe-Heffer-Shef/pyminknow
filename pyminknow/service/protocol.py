@@ -216,6 +216,7 @@ class Run:
     @property
     def info(self) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
         return minknow.rpc.protocol_pb2.ProtocolRunInfo(
+            run_id=self.run_id,
             protocol_id=self.protocol_id,
             args=self.args,
             output_path=self.output_path,
@@ -236,7 +237,7 @@ class Run:
         directory = cls.build_serialisation_dir(device=device)
         paths = pathlib.Path(directory).glob('*.{}'.format(cls.SERIALISATION_EXT))
         yield from (
-            # remove file ext
+            # Remove file extension
             _path.stem for _path in
             # Sort by creation time
             sorted(paths, key=lambda _path: _path.stat().st_ctime)
