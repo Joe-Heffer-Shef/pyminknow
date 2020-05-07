@@ -27,6 +27,13 @@ def build_timestamp(timestamp=None) -> google.protobuf.timestamp_pb2.Timestamp:
     return proto_timestamp.FromDatetime(timestamp or datetime.datetime.utcnow())
 
 
+def to_datetime(timestamp: google.protobuf.timestamp_pb2.Timestamp) -> datetime.datetime:
+    try:
+        return timestamp.ToDateTime()
+    except AttributeError:
+        pass
+
+
 class Run:
     """Protocol run (dummy)"""
     SERIALISATION_EXT = 'pkl'
@@ -52,17 +59,19 @@ class Run:
 
     @property
     def as_dict(self) -> dict:
+        """Convert to Python data types"""
+
         return dict(
             state=self.state,
             run_id=self.run_id,
             protocol_id=self.protocol_id,
             user_info=dict(
-                protocol_group_id=str(self.user_info.protocol_group_id),
-                sample_id=str(self.user_info.sample_id),
+                protocol_group_id=self.user_info.protocol_group_id.value,
+                sample_id=self.user_info.sample_id.value,
             ),
-            args=self.args,
-            start_time=self.start_time,
-            end_time=self.end_time,
+            args=list(self.args),
+            start_time=to_datetime(self.start_time),
+            end_time=to_datetime(self.end_time),
             device=self.device,
         )
 
@@ -103,10 +112,10 @@ class Run:
         """Write sequence data to disk"""
 
         filename = 'my_data.txt'
-        path = os.path.join(self.output_directory, filename)
+        path = os.path.join(self.output_path, filename)
 
         # Write to disk
-        os.makedirs(self.output_directory, exist_ok=True)
+        os.makedirs(self.output_path, exist_ok=True)
         with open(path, 'w') as file:
             # Generate some dummy data
             file.write('Hello world!\n')
@@ -143,16 +152,23 @@ class Run:
         return self.state == minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
 
     @property
-    def output_directory(self) -> str:
+    def protocol_group_id(self) -> str:
+        return self.user_info.protocol_group_id.value
+
+    @property
+    def sample_id(self) -> str:
+        return self.user_info.sample_id.value
+
+    @property
+    def output_path(self) -> str:
         """
         The directory to save the sequencing data
-        e.g. "/data/external_run_id/external_run_id/protcol_run_id"
+        e.g. "/data/protocol_group_id/sample_id/protcol_run_id"
         """
-        external_run_id = str(self.user_info.protocol_group_id)
         return os.path.join(
             pyminknow.config.DATA_DIR,
-            external_run_id,
-            external_run_id,
+            self.protocol_group_id,
+            self.sample_id,
             self.run_id,
         )
 
@@ -202,7 +218,7 @@ class Run:
         return minknow.rpc.protocol_pb2.ProtocolRunInfo(
             protocol_id=self.protocol_id,
             args=self.args,
-            output_path=self.output_directory,
+            output_path=self.output_path,
             state=self.state,
             start_time=self.start_time,
             end_time=self.end_time,
@@ -323,14 +339,11 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     def run_ids(self) -> list:
         return list(Run.get_run_ids(device=self.device))
 
-    def get_run_info(self, request, context):
+    def get_run_info(self, request, context) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
         run_id = request.run_id
 
         # If no run ID is provided, information about the most recently started protocol run is provided
-        if not run_id:
-            run_id = self.latest_run_id
-
-        run = Run(run_id=run_id, device=self.device)
+        run = Run(run_id=run_id or self.latest_run_id, device=self.device)
         run.deserialise()
 
         return run.info

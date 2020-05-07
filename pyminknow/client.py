@@ -27,7 +27,9 @@ USAGE = "python -m pyminknow.client"
 
 class RpcClient:
     """
-    gRPC client
+    Client to send and receive Protocol Buffers objects as part of the minKNOW gRPC interface:
+
+    https://github.com/nanoporetech/minknow_lims_interface/tree/master/minknow/rpc
     """
 
     # TODO timeouts
@@ -71,6 +73,8 @@ class RpcClient:
 class ManagerClient(RpcClient):
     """
     Manager client
+
+    https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/manager.proto
     """
 
     stub_name = 'manager'
@@ -134,21 +138,17 @@ class ProtocolClient(RpcClient):
         request = minknow.rpc.protocol_pb2.SetSampleIdRequest(sample_id=sample_id)
         return self.stub.set_sample_id(request)
 
-    def list_protocol_runs(self) -> list:
+    def list_protocol_runs(self) -> minknow.rpc.protocol_pb2.ListProtocolRunsResponse:
         request = minknow.rpc.protocol_pb2.ListProtocolRunsRequest()
-        response = self.stub.list_protocol_runs(request)
-        return response.run_ids
+        return self.stub.list_protocol_runs(request)
 
     @property
-    def latest_run_id(self) -> int:
-        return self.list_protocol_runs()[0]
+    def latest_run_id(self) -> str:
+        return next(iter(self.list_protocol_runs().run_ids))
 
     def get_run_info(self, run_id: str = None) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
-        # Get latest run ID
-        if run_id is None:
-            run_id = self.latest_run_id
-
-        request = minknow.rpc.protocol_pb2.GetRunInfoRequest(run_id=run_id)
+        # If no run is specified, use the most recent one
+        request = minknow.rpc.protocol_pb2.GetRunInfoRequest(run_id=run_id or self.latest_run_id)
         return self.stub.get_run_info(request)
 
     def wait_for_finished(self, run_id: str, state: int = 0,
@@ -164,19 +164,22 @@ class ProtocolClient(RpcClient):
 class DeviceClient(RpcClient):
     """
     Device client
+
+    https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/device.proto
     """
 
     stub_name = 'device'
 
     def get_device_state(self) -> minknow.rpc.device_pb2.GetDeviceStateResponse:
         request = minknow.rpc.device_pb2.GetDeviceStateRequest()
-        response = self.stub.get_device_state(request)
+        return self.stub.get_device_state(request)
 
-        # Get human-readable state
+    def get_device_state_name(self) -> str:
+        """Get human-readable state"""
+        response = self.get_device_state()
         state_name = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState.Name(response.device_state)
-        LOGGER.info("Device status: %s => '%s'", response.device_state, state_name)
-
-        return response
+        LOGGER.debug("Device status: %s => '%s'", response.device_state, state_name)
+        return state_name
 
     def get_device_info(self) -> minknow.rpc.device_pb2.GetDeviceInfoResponse:
         request = minknow.rpc.device_pb2.GetDeviceInfoRequest()
@@ -185,7 +188,7 @@ class DeviceClient(RpcClient):
     def get_flow_cell_info(self) -> minknow.rpc.device_pb2.GetFlowCellInfoResponse:
         request = minknow.rpc.device_pb2.GetFlowCellInfoRequest()
         response = self.stub.get_flow_cell_info(request)
-        LOGGER.info("has_flow_cell: %s", response.has_flow_cell)
+        LOGGER.debug("has_flow_cell: %s", response.has_flow_cell)
         return response
 
 
@@ -281,8 +284,7 @@ def main():
                 run_info = client.get_run_info(run_id)
                 print(run_info)
             elif args.list_protocol_runs:
-                run_ids = client.list_protocol_runs()
-                print(run_ids)
+                print(client.list_protocol_runs())
             else:
                 raise ValueError('Unknown command')
 
