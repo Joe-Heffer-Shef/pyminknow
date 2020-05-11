@@ -17,7 +17,6 @@ RUN apt-get update && apt-get --yes install openssh-server rsync \
   && pip install --upgrade pip
 
 # Create a SSH user for the COGUK system with passwordless access
-RUN useradd minknow --create-home && mkdir /home/minknow/.ssh
 COPY .ssh/id_rsa.pub .ssh/
 RUN cat .ssh/id_rsa.pub >> /home/minknow/.ssh/authorized_keys
 
