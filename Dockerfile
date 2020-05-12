@@ -33,6 +33,7 @@ COPY minknow_lims_interface minknow_lims_interface
 RUN pwd && ls -l
 RUN sh compile_grpc.sh
 
+RUN chown --recursive minknow:minow /home/minknow
 USER minknow
 
 CMD ["python", "-m", "pyminknow"]
