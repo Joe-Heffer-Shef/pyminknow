@@ -108,19 +108,20 @@ class Run:
     def deserialise(self):
         self.from_dict(self.load())
 
-    def save_data(self):
+    def save_data(self, n=10):
         """Write sequence data to disk"""
 
-        filename = 'my_data.txt'
-        path = os.path.join(self.output_path, filename)
+        for i in range(10):
+            filename = 'file_{}.txt'.format(str(i).zfill(4))
+            path = os.path.join(self.output_path, filename)
 
-        # Write to disk
-        os.makedirs(self.output_path, exist_ok=True)
-        with open(path, 'w') as file:
-            # Generate some dummy data
-            file.write('Hello world!\n')
+            # Write to disk
+            os.makedirs(self.output_path, exist_ok=True)
+            with open(path, 'w') as file:
+                # Generate some dummy data
+                file.write('Hello world!\n')
 
-            LOGGER.debug("Wrote '%s'", file.name)
+                LOGGER.debug("Wrote '%s'", file.name)
 
     @property
     def state(self) -> minknow.rpc.protocol_pb2.ProtocolState:
