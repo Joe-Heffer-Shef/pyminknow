@@ -20,23 +20,29 @@ class Server:
         pyminknow.service.manager.ManagerService,
     }
 
-    def __init__(self, device_port: int):
-        self.port = device_port
+    def __init__(self, port: int = None):
+        """minKNOW server"""
+        self.port = port or pyminknow.config.DEFAULT_PORT
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS)
         self.servers = list()
 
-        # Create manager service
+        # Listen on main port
         server = grpc.server(thread_pool=self.thread_pool)
-        server.add_insecure_port('[::]:{port}'.format(port=device_port))
+        server.add_insecure_port('[::]:{port}'.format(port=port))
+
+        # Create manager service
         manager_servicer = pyminknow.service.manager.ManagerService()
         manager_servicer.add_to_server(server)
         self.servers.append(server)
 
         # Devices
         for device in pyminknow.config.DEVICES:
+            # Listen on specific port for each device
             device_port = device['ports']['insecure']
             server = grpc.server(thread_pool=self.thread_pool)
             server.add_insecure_port('[::]:{port}'.format(port=device_port))
+
+            # Register services
             pyminknow.service.protocol.ProtocolService(device=device).add_to_server(server)
             device_servicer = pyminknow.service.device.DeviceService(device=device)
             device_servicer.add_to_server(server)
@@ -59,10 +65,10 @@ class Server:
         for server in self.servers:
             server.wait_for_termination()
 
-    def serve(self, grace: float):
+    def serve(self, grace: float = None):
         """Run the server"""
         try:
             self.start()
             self.wait()
         except KeyboardInterrupt:
-            self.stop(grace=grace)
+            self.stop(grace=grace or pyminknow.config.DEFAULT_GRACE)

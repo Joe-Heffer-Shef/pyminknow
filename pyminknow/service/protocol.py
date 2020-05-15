@@ -71,8 +71,8 @@ class Run:
                 sample_id=self.user_info.sample_id.value,
             ),
             args=list(self.args),
-            start_time=to_datetime(self.start_time),
-            end_time=to_datetime(self.end_time),
+            _start_time=self._start_time,
+            _end_time=self._end_time,
             device=self.device,
         )
 

@@ -62,3 +62,4 @@ DEVICES = (
 )
 
 RUN_DURATION = 1  # seconds
+DEFAULT_GRACE = 1

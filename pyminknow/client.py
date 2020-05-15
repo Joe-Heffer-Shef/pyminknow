@@ -107,7 +107,7 @@ class ProtocolClient(RpcClient):
 
     stub_name = 'protocol'
 
-    def list_protocols(self):
+    def list_protocols(self) -> minknow.rpc.protocol_pb2.ListProtocolsResponse:
         request = minknow.rpc.protocol_pb2.ListProtocolsRequest()
         return self.stub.list_protocols(request)
 
@@ -222,16 +222,20 @@ def get_args():
     return parser, parser.parse_args()
 
 
-def connect(host: str, port: int):
-    """
-    Connect to the server
-    """
+def connect(host: str = 'localhost', port: int = 9501):
+    """Connect to the server by opening a gRPC channel"""
 
     target = '{host}:{port}'.format(host=host, port=port)
 
     LOGGER.info("Connecting to '%s'...", target)
 
-    channel = grpc.insecure_channel(target=target)
+    # gRPC channel options
+    # https://grpc.github.io/grpc/core/group__grpc__arg__keys.html
+    options = [
+        # ('GRPC_ARG_SERVER_HANDSHAKE_TIMEOUT_MS', 10),
+    ]
+
+    channel = grpc.insecure_channel(target=target, options=options)
 
     return channel
 
@@ -273,7 +277,7 @@ def main():
 
             # Launch new protocol run
             elif args.start_protocol:
-                run_id = client.start_protocol(
+                response = client.start_protocol(
                     identifier=args.start_protocol,
                     user_info=dict(protocol_group_id=args.protocol_group_id, sample_id=args.sample_id),
                     args=[
@@ -285,6 +289,7 @@ def main():
                         "--experiment_time=24"
                     ],
                 )
+                run_id = response.run_id
                 LOGGER.info("Started run ID: %s", run_id)
                 run_info = client.get_run_info(run_id)
                 print(run_info)

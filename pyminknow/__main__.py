@@ -35,7 +35,7 @@ def main():
     args = get_args()
     configure_logging(verbose=args.verbose)
 
-    server = pyminknow.server.Server(device_port=args.port)
+    server = pyminknow.server.Server(port=args.port)
     server.serve(grace=args.grace)
 
 
