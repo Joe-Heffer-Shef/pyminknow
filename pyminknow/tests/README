@@ -1,0 +1,7 @@
+Unit tests
+
+You need to run a server on your machine to use these tests.
+
+Usage: python -m unittest
+
+https://docs.python.org/3/library/unittest.html
