@@ -22,7 +22,11 @@ This is a client to test a Nanopore gene sequencing device by using its gRPC int
 Some commands are run against the manager (minKNOW) and some against a device (a mini
 """
 
-USAGE = "python -m pyminknow.client"
+USAGE = """
+# Assuming we're connecting to the minKNOW, get the port to use for each device
+python -m pyminknow.client --list_devices
+python -m pyminknow.client --port 8012 --start_protocol sequencing/sequencing_MIN106_DNA:FLO-MIN106:SQK-LSK109:True
+"""
 
 
 class RpcClient:
@@ -213,6 +217,7 @@ def get_args():
                         help='List previously started protocol run IDs, in order of starting')
     parser.add_argument('-u', '--get_run_info', action='store_true', help="Get run info (Protocol)")
     parser.add_argument('-n', '--run_id', help="Protocol run identifier")
+    parser.add_argument('-a', '--sample_id', help="Sample identifier")
 
     return parser, parser.parse_args()
 
@@ -270,7 +275,7 @@ def main():
             elif args.start_protocol:
                 run_id = client.start_protocol(
                     identifier=args.start_protocol,
-                    user_info=dict(protocol_group_id=args.protocol_group_id),
+                    user_info=dict(protocol_group_id=args.protocol_group_id, sample_id=args.sample_id),
                     args=[
                         "--fast5=on",
                         "--fast5_data", "trace_table", "fastq", "raw", "zlib_compress",

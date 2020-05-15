@@ -45,7 +45,7 @@ class Run:
         self.protocol_id = protocol_id
         self.user_info = user_info
         self.args = list(args or ())
-        self.start_time = datetime.datetime.utcnow()
+        self._start_time = None
         self.end_time = None
         self.device = device
         self._acquisition_run_ids = None
@@ -130,7 +130,7 @@ class Run:
             yield template.format(flow_cell_id=self.flow_cell_id, acq=self.acq_id_short, day=self.day,
                                   time=self.time, run_id_short=self.run_id_short)
 
-    def save_data(self, n=10):
+    def save_data(self):
         """Write sequence data to disk"""
 
         # Build directory structure
@@ -143,7 +143,7 @@ class Run:
                 os.makedirs(subdir, exist_ok=True)
 
         # Create data files
-        for filename in self.build_filenames()
+        for filename in self.build_filenames():
             path = os.path.join(self.output_path, filename)
             pathlib.Path(path).touch()
 
@@ -168,6 +168,7 @@ class Run:
 
     def start(self):
         self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_RUNNING
+        self.start_time = datetime.datetime.utcnow()
 
         LOGGER.debug("Starting run ID: %s", self.run_id)
         LOGGER.debug("Protocol group ID: %s", self.user_info.protocol_group_id.value)
@@ -223,11 +224,11 @@ class Run:
 
     @property
     def day(self) -> str:
-        return self.start_time.date().strftime('%Y%m%d')
+        return self._start_time.date().strftime('%Y%m%d')
 
     @property
     def time(self):
-        return self.start_time.strftime('%H%M')
+        return self._start_time.strftime('%H%M')
 
     @classmethod
     def make_run_id(cls) -> str:
@@ -241,11 +242,11 @@ class Run:
         )
 
     @property
-    def start_time(self):
+    def start_time(self) -> google.protobuf.timestamp_pb2.Timestamp:
         return build_timestamp(self._start_time)
 
     @start_time.setter
-    def start_time(self, value):
+    def start_time(self, value: datetime.datetime):
         self._start_time = value
 
     @property
@@ -253,7 +254,7 @@ class Run:
         return build_timestamp(self._end_time)
 
     @end_time.setter
-    def end_time(self, value):
+    def end_time(self, value) -> google.protobuf.timestamp_pb2.Timestamp:
         self._end_time = value
 
     @property
@@ -282,7 +283,7 @@ class Run:
 
     @property
     def acquisition_run_id(self) -> str:
-        return self.acquisition_run_id[-1]
+        return self.acquisition_run_ids[-1]
 
     @classmethod
     def get_run_ids(cls, device: dict):
