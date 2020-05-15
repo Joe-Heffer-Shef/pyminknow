@@ -164,18 +164,18 @@ class Run:
         """Change state"""
         self._state = state
         LOGGER.debug('Run %s changed state to %s', self.run_id, self.state)
-        self.serialise()
 
     def start(self):
-        self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_RUNNING
         self.start_time = datetime.datetime.utcnow()
+        self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_RUNNING
+        self.serialise()
 
-        LOGGER.debug("Starting run ID: %s", self.run_id)
-        LOGGER.debug("Protocol group ID: %s", self.user_info.protocol_group_id.value)
-        LOGGER.debug("Sample ID: %s", self.user_info.sample_id.value)
+        LOGGER.debug("Starting run ID: '%s'", self.run_id)
+        time.sleep(pyminknow.config.RUN_DURATION)
 
         self.save_data()
         self.finish()
+        self.serialise()
 
     def finish(self):
         self.end_time = datetime.datetime.utcnow()

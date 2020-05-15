@@ -60,3 +60,5 @@ DEVICES = (
     dict(name='X4', layout=dict(x=3, y=0), ports=dict(secure=8017, insecure=8016), flow_cell=None),
     dict(name='X5', layout=dict(x=4, y=0), ports=dict(secure=8001, insecure=8000), flow_cell=None),
 )
+
+RUN_DURATION = 1  # seconds
