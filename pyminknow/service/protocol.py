@@ -48,6 +48,7 @@ class Run:
         self.start_time = datetime.datetime.utcnow()
         self.end_time = None
         self.device = device
+        self._acquisition_run_ids = None
 
     @property
     def serialisation_dir(self) -> str:
@@ -108,20 +109,51 @@ class Run:
     def deserialise(self):
         self.from_dict(self.load())
 
+    def build_filenames(self) -> iter:
+        """Generate filenames for output data files"""
+        templates = {
+            'drift_correction_{flow_cell_id}_{acq}.csv',
+            'duty_time_{flow_cell_id}_{acq}.csv',
+            'final_summary_{flow_cell_id}_{acq}.txt',
+            'mux_scan_data_{flow_cell_id}_{acq}.csv',
+            'sequencing_summary_{flow_cell_id}_{acq}.txt',
+            'throughput_{flow_cell_id}_{acq}.csv',
+        }
+        for template in templates:
+            yield template.format(flow_cell_id=self.flow_cell_id, acq=self.acq_id_short)
+
+        templates = {
+            'report_{flow_cell_id}_{day}_{time}_{run_id_short}.md',
+            'report_{flow_cell_id}_{day}_{time}_{run_id_short}.pdf',
+        }
+        for template in templates:
+            yield template.format(flow_cell_id=self.flow_cell_id, acq=self.acq_id_short, day=self.day,
+                                  time=self.time, run_id_short=self.run_id_short)
+
     def save_data(self, n=10):
         """Write sequence data to disk"""
 
-        for i in range(10):
-            filename = 'file_{}.txt'.format(str(i).zfill(4))
+        # Build directory structure
+        os.makedirs(self.output_path, exist_ok=True)
+
+        # Make subdirectories e.g. "fast5_fail"
+        for test in {'fast5', 'fastq'}:
+            for result in {'pass', 'fail'}:
+                subdir = os.path.join(self.output_path, "{}_{}".format(test, result))
+                os.makedirs(subdir, exist_ok=True)
+
+        # Create data files
+        for filename in self.build_filenames()
             path = os.path.join(self.output_path, filename)
+            pathlib.Path(path).touch()
 
-            # Write to disk
-            os.makedirs(self.output_path, exist_ok=True)
-            with open(path, 'w') as file:
-                # Generate some dummy data
-                file.write('Hello world!\n')
+    @property
+    def acq_id_short(self) -> str:
+        return self.acquisition_run_id.partition('-')[0]
 
-                LOGGER.debug("Wrote '%s'", file.name)
+    @property
+    def run_id_short(self) -> str:
+        return self.run_id.partition('-')[0]
 
     @property
     def state(self) -> minknow.rpc.protocol_pb2.ProtocolState:
@@ -164,28 +196,38 @@ class Run:
     def output_path(self) -> str:
         """
         The directory to save the sequencing data
-        e.g. "/data/protocol_group_id/sample_id/protcol_run_id"
+        "/data/protocol_group_id/sample_id/<run code>"
+        e.g. "/data/covid19-20200512-1589296413/covid19-20200512-1589296413/20200512_1517_X2_FAN43172_fa3c47d5"
         """
         return os.path.join(
             pyminknow.config.DATA_DIR,
             self.protocol_group_id,
             self.sample_id,
-            self.run_id,
+            self.run_code,
         )
 
     @property
-    def data_subdir(self):
+    def flow_cell_id(self) -> str:
+        return self.device['flow_cell']['flow_cell_id']
+
+    @property
+    def run_code(self):
         """
-        Generate protocol run identifier
-        e.g. "DATE_TIME_DEVICE_FLOWCELLID_PARTOFAQUISITIONID"
+        Generate protocol run identifier "DATE_TIME_DEVICE_FLOWCELLID_PARTOFAQUISITIONID"
+        e.g. "20200512_1517_X2_FAN43172_fa3c47d5"
         """
         device_id = self.device['name']
-        flow_cell_id = self.device['flow_cell']['flow_cell_id']
-        day = self.start_time.date().strftime('%Y%m%d')
-        clock_time = self.start_time.strftime('%H%M')
-        unique = self.run_id.partition('-')[0]
-        return "{day}_{time}_{device}_{flow_cell}_{acq}".format(day=day, time=clock_time, device=device_id,
-                                                                flow_cell=flow_cell_id, acq=unique)
+        return "{day}_{time}_{device}_{flow_cell}_{aqu_short}".format(day=self.day, time=self.time, device=device_id,
+                                                                      flow_cell=self.flow_cell_id,
+                                                                      aqu_short=self.acq_id_short)
+
+    @property
+    def day(self) -> str:
+        return self.start_time.date().strftime('%Y%m%d')
+
+    @property
+    def time(self):
+        return self.start_time.strftime('%H%M')
 
     @classmethod
     def make_run_id(cls) -> str:
@@ -230,7 +272,17 @@ class Run:
 
     @property
     def acquisition_run_ids(self) -> list:
-        return [str(uuid.uuid4()) for _ in range(3)]
+        if not self._acquisition_run_ids:
+            self._acquisition_run_ids = [str(uuid.uuid4()) for _ in range(3)]
+        return self._acquisition_run_ids
+
+    @acquisition_run_ids.setter
+    def acquisition_run_ids(self, value):
+        self._acquisition_run_ids = value
+
+    @property
+    def acquisition_run_id(self) -> str:
+        return self.acquisition_run_id[-1]
 
     @classmethod
     def get_run_ids(cls, device: dict):
