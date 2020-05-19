@@ -1,6 +1,5 @@
 import datetime
 import logging
-import os.path
 import pathlib
 import pickle
 import time
@@ -51,7 +50,7 @@ class Run:
         self._acquisition_run_ids = None
 
     @property
-    def serialisation_dir(self) -> str:
+    def serialisation_dir(self) -> pathlib.Path:
         return self.build_serialisation_dir(device=self.device)
 
     @property
@@ -78,17 +77,17 @@ class Run:
         )
 
     @property
-    def path(self) -> str:
-        return os.path.join(self.serialisation_dir, self.filename)
+    def path(self) -> pathlib.Path:
+        return self.serialisation_dir.joinpath(self.filename)
 
     @classmethod
-    def build_serialisation_dir(cls, device: dict) -> str:
-        return os.path.join(pyminknow.config.RUN_DIR, device['name'])
+    def build_serialisation_dir(cls, device: dict) -> pathlib.Path:
+        return pathlib.Path(pyminknow.config.RUN_DIR).joinpath(device['name'])
 
     def serialise(self):
-        os.makedirs(self.serialisation_dir, exist_ok=True)
+        self.serialisation_dir.mkdir(exist_ok=True)
 
-        with open(self.path, 'wb') as file:
+        with self.path.open('wb') as file:
             pickle.dump(self.as_dict, file)
 
             LOGGER.info("Wrote '%s'", file.name)
@@ -100,7 +99,7 @@ class Run:
             setattr(self, attr, value)
 
     def load(self) -> dict:
-        with open(self.path, 'rb') as file:
+        with self.path.open('rb') as file:
             data = pickle.load(file)
 
             LOGGER.debug("Read '%s'", file.name)
@@ -134,19 +133,26 @@ class Run:
     def save_data(self):
         """Write sequence data to disk"""
 
-        # Build directory structure
-        os.makedirs(self.output_path, exist_ok=True)
-
         # Make subdirectories e.g. "fast5_fail"
         for test in {'fast5', 'fastq'}:
             for result in {'pass', 'fail'}:
-                subdir = os.path.join(self.output_path, "{}_{}".format(test, result))
-                os.makedirs(subdir, exist_ok=True)
+                subdir = self.output_path.joinpath("{}_{}".format(test, result))
+
+                # One folder per barcode containing an empty file
+                for i in range(25):
+                    barcode = "barcode" + str(i).zfill(2)
+
+                    subsubdir = subdir.joinpath(barcode)
+
+                    subsubdir.mkdir(parents=True, exist_ok=True)
+
+                    filename = self.run_code + '_0.' + test
+                    subsubdir.joinpath(filename).touch()
 
         # Create data files
         for filename in self.build_filenames():
-            path = os.path.join(self.output_path, filename)
-            pathlib.Path(path).touch()
+            path = self.output_path.joinpath(filename)
+            path.touch()
 
             LOGGER.debug("Wrote '%s'", path)
 
@@ -197,14 +203,13 @@ class Run:
         return self.user_info.sample_id.value
 
     @property
-    def output_path(self) -> str:
+    def output_path(self) -> pathlib.Path:
         """
         The directory to save the sequencing data
         "/data/protocol_group_id/sample_id/<run code>"
         e.g. "/data/covid19-20200512-1589296413/covid19-20200512-1589296413/20200512_1517_X2_FAN43172_fa3c47d5"
         """
-        return os.path.join(
-            pyminknow.config.DATA_DIR,
+        return pathlib.Path(pyminknow.config.DATA_DIR).joinpath(
             self.protocol_group_id,
             self.sample_id,
             self.run_code,
@@ -266,7 +271,7 @@ class Run:
             run_id=self.run_id,
             protocol_id=self.protocol_id,
             args=self.args,
-            output_path=self.output_path,
+            output_path=str(self.output_path),
             state=self.state,
             start_time=self.start_time,
             end_time=self.end_time,
@@ -274,10 +279,14 @@ class Run:
             acquisition_run_ids=self.acquisition_run_ids,
         )
 
+    @staticmethod
+    def build_acquisition_run_ids(n: int = 3):
+        return [str(uuid.uuid4()) for _ in range(n)]
+
     @property
     def acquisition_run_ids(self) -> list:
         if not self._acquisition_run_ids:
-            self._acquisition_run_ids = [str(uuid.uuid4()) for _ in range(3)]
+            self._acquisition_run_ids = self.build_acquisition_run_ids()
         return self._acquisition_run_ids
 
     @acquisition_run_ids.setter
