@@ -66,6 +66,7 @@ class Run:
             state=self.state,
             run_id=self.run_id,
             protocol_id=self.protocol_id,
+            _acquisition_run_ids=self._acquisition_run_ids,
             user_info=dict(
                 protocol_group_id=self.user_info.protocol_group_id.value,
                 sample_id=self.user_info.sample_id.value,
@@ -146,6 +147,8 @@ class Run:
         for filename in self.build_filenames():
             path = os.path.join(self.output_path, filename)
             pathlib.Path(path).touch()
+
+            LOGGER.debug("Wrote '%s'", path)
 
     @property
     def acq_id_short(self) -> str:
