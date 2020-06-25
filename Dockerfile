@@ -18,7 +18,7 @@ RUN apt-get update && apt-get --yes install openssh-server rsync \
 
 # Create sequencer data directory
 ENV MINKNOW_DATA_DIR=/data
-RUN mkdir /data && chown minknow:minknow $MINKNOW_DATA_DIR
+RUN mkdir $MINKNOW_DATA_DIR && chown minknow:minknow $MINKNOW_DATA_DIR
 
 # Install Python packages
 RUN pip install pyminknow
