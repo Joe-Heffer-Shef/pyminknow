@@ -85,7 +85,7 @@ class Run:
         return pathlib.Path(pyminknow.config.RUN_DIR).joinpath(device['name'])
 
     def serialise(self):
-        self.serialisation_dir.mkdir(exist_ok=True)
+        self.serialisation_dir.mkdir(parents=True, exist_ok=True)
 
         with self.path.open('wb') as file:
             pickle.dump(self.as_dict, file)
