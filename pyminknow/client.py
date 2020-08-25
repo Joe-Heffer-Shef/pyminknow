@@ -11,6 +11,8 @@ import minknow.rpc.manager_pb2
 import minknow.rpc.manager_pb2_grpc
 import minknow.rpc.protocol_pb2
 import minknow.rpc.protocol_pb2_grpc
+import minknow.rpc.acquisition_pb2
+import minknow.rpc.acquisition_pb2_grpc
 
 import pyminknow.config
 
@@ -135,6 +137,18 @@ class ProtocolClient(RpcClient):
         )
 
         return self.stub.start_protocol(request)
+
+    def stop_protocol(self, data_action_on_stop: int):
+        """
+        Stops the currently running protocol script instance
+
+        data_action_on_stop:
+          https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/acquisition.proto#L260
+        """
+        # >>> minknow.rpc.acquisition_pb2.StopRequest.DataAction.items()
+        # [('STOP_DEFAULT', 0), ('STOP_KEEP_ALL_DATA', 1), ('STOP_FINISH_PROCESSING', 2)]
+        request = minknow.rpc.protocol_pb2.StopProtocolRequest(data_action_on_stop=data_action_on_stop)
+        return self.stub.stop_protocol(request)
 
     def set_sample_id(self, sample_id: str) -> minknow.rpc.protocol_pb2.SetSampleIdResponse:
         warnings.warn('The sample_id should be set in the request when a protocol starts ( start_protocol() )',

@@ -178,10 +178,14 @@ class Run:
         self.start_time = datetime.datetime.utcnow()
         self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_RUNNING
         self.serialise()
+        self.run()
+        self.stop()
 
+    def run(self):
         LOGGER.debug("Starting run ID: '%s'", self.run_id)
         time.sleep(pyminknow.config.RUN_DURATION)
 
+    def stop(self):
         self.save_data()
         self.finish()
         self.serialise()
@@ -396,6 +400,18 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         run_id = self._start_protocol(identifier=request.identifier, user_info=request.user_info, args=request.args)
 
         return minknow.rpc.protocol_pb2.StartProtocolResponse(run_id=run_id)
+
+    def stop_protocol(self, request, context) -> minknow.rpc.protocol_pb2.StopProtocolResponse:
+        """
+        Stops the currently running protocol script instance.
+
+        https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/protocol.proto#L17
+        """
+
+        run = Run(Run.latest_run_id)
+        run.stop()
+
+        return minknow.rpc.protocol_pb2.StopProtocolResponse()
 
     @property
     def latest_run_id(self):
