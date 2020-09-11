@@ -37,6 +37,8 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
                 wells_per_channel=4,
                 asic_id=5287869,
                 product_code="FLO-MIN106",
+                user_specified_flow_cell_id="?",
+                user_specified_product_code='?',
                 temperature_offset=327.6700134277344,
                 asic_version="IA02D",
                 asic_id_str="5287869",
