@@ -12,7 +12,7 @@ with open('README.md') as file:
 
 setuptools.setup(
     name='pyminknow',
-    version='0.1.18',
+    version='0.1.19',
     author="Joe Heffer",
     author_email="j.heffer@sheffield.ac.uk",
     description="This service mimics a Nanopore minKNOW gene sequencing device by using its gRPC interface.",

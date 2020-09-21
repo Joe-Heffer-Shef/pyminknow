@@ -220,8 +220,17 @@ class Run:
         )
 
     @property
+    def flow_cell(self) -> dict:
+        flow_cell = self.device['flow_cell']
+
+        if not flow_cell:
+            raise ValueError("No flow cell configured")
+
+        return flow_cell
+
+    @property
     def flow_cell_id(self) -> str:
-        return self.device['flow_cell']['flow_cell_id']
+        return self.flow_cell['flow_cell_id']
 
     @property
     def run_code(self):
