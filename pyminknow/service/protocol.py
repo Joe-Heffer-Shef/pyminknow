@@ -12,8 +12,8 @@ from collections import Iterable
 import google.protobuf.timestamp_pb2
 import google.protobuf.wrappers_pb2
 
-import minknow.rpc.protocol_pb2
-import minknow.rpc.protocol_pb2_grpc
+import minknow_api.protocol_pb2
+import minknow_api.protocol_pb2_grpc
 import pyminknow.config
 
 LOGGER = logging.getLogger(__name__)
@@ -165,7 +165,7 @@ class Run:
         return self.run_id.partition('-')[0]
 
     @property
-    def state(self) -> minknow.rpc.protocol_pb2.ProtocolState:
+    def state(self) -> minknow_api.protocol_pb2.ProtocolState:
         return self._state
 
     @state.setter
@@ -176,7 +176,7 @@ class Run:
 
     def start(self):
         self.start_time = datetime.datetime.utcnow()
-        self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_RUNNING
+        self.state = minknow_api.protocol_pb2.ProtocolState.PROTOCOL_RUNNING
         self.serialise()
         self.run()
         self.stop()
@@ -192,11 +192,11 @@ class Run:
 
     def finish(self):
         self.end_time = datetime.datetime.utcnow()
-        self.state = minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
+        self.state = minknow_api.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
 
     @property
     def is_complete(self) -> bool:
-        return self.state == minknow.rpc.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
+        return self.state == minknow_api.protocol_pb2.ProtocolState.PROTOCOL_COMPLETED
 
     @property
     def protocol_group_id(self) -> str:
@@ -257,7 +257,7 @@ class Run:
 
     @classmethod
     def build_user_info(cls, protocol_group_id: str, sample_id: str):
-        return minknow.rpc.protocol_pb2.ProtocolRunUserInfo(
+        return minknow_api.protocol_pb2.ProtocolRunUserInfo(
             protocol_group_id=google.protobuf.wrappers_pb2.StringValue(value=protocol_group_id),
             sample_id=google.protobuf.wrappers_pb2.StringValue(value=sample_id),
         )
@@ -279,8 +279,8 @@ class Run:
         self._end_time = value
 
     @property
-    def info(self) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
-        return minknow.rpc.protocol_pb2.ProtocolRunInfo(
+    def info(self) -> minknow_api.protocol_pb2.ProtocolRunInfo:
+        return minknow_api.protocol_pb2.ProtocolRunInfo(
             run_id=self.run_id,
             protocol_id=self.protocol_id,
             args=self.args,
@@ -327,13 +327,13 @@ class Run:
         return next(cls.get_run_ids(device))
 
 
-class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
+class ProtocolService(minknow_api.protocol_pb2_grpc.ProtocolServiceServicer):
     """
     Protocol service
 
     https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/protocol.proto
     """
-    add_to_server = minknow.rpc.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
+    add_to_server = minknow_api.protocol_pb2_grpc.add_ProtocolServiceServicer_to_server
 
     def __init__(self, *args, device: dict, **kwargs):
         super().__init__(*args, **kwargs)
@@ -346,13 +346,13 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         protocols = self.get_protocol_info()
 
-        return minknow.rpc.protocol_pb2.ListProtocolsResponse(protocols=protocols)
+        return minknow_api.protocol_pb2.ListProtocolsResponse(protocols=protocols)
 
     def clear_protocol_cache(self):
         raise NotImplementedError
 
     @staticmethod
-    def tag_value(value) -> minknow.rpc.protocol_pb2.ProtocolInfo.TagValue:
+    def tag_value(value) -> minknow_api.protocol_pb2.ProtocolInfo.TagValue:
         """
         Translate a value in a Python native data type to a ProtocolInfo.TagValue (protocol buffers data type)
 
@@ -376,7 +376,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
                 kwargs = {arg: value}
 
-                return minknow.rpc.protocol_pb2.ProtocolInfo.TagValue(**kwargs)
+                return minknow_api.protocol_pb2.ProtocolInfo.TagValue(**kwargs)
 
         raise ValueError(value)
 
@@ -384,11 +384,11 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     def get_protocol_info() -> list:
         """Build collection of ProtocolInfo objects"""
         return [
-            minknow.rpc.protocol_pb2.ProtocolInfo(
+            minknow_api.protocol_pb2.ProtocolInfo(
                 identifier=protocol['identifier'],
                 name=protocol['name'],
                 tags={key: ProtocolService.tag_value(value) for key, value in protocol['tags'].items()},
-                tag_extraction_result=minknow.rpc.protocol_pb2.ProtocolInfo.TagExtractionResult(
+                tag_extraction_result=minknow_api.protocol_pb2.ProtocolInfo.TagExtractionResult(
                     success=True,
                     error_report='',
                 ),
@@ -408,9 +408,9 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         run_id = self._start_protocol(identifier=request.identifier, user_info=request.user_info, args=request.args)
 
-        return minknow.rpc.protocol_pb2.StartProtocolResponse(run_id=run_id)
+        return minknow_api.protocol_pb2.StartProtocolResponse(run_id=run_id)
 
-    def stop_protocol(self, request, context) -> minknow.rpc.protocol_pb2.StopProtocolResponse:
+    def stop_protocol(self, request, context) -> minknow_api.protocol_pb2.StopProtocolResponse:
         """
         Stops the currently running protocol script instance.
 
@@ -420,7 +420,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
         run = Run(Run.latest_run_id)
         run.stop()
 
-        return minknow.rpc.protocol_pb2.StopProtocolResponse()
+        return minknow_api.protocol_pb2.StopProtocolResponse()
 
     @property
     def latest_run_id(self):
@@ -431,7 +431,7 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
     def run_ids(self) -> list:
         return list(Run.get_run_ids(device=self.device))
 
-    def get_run_info(self, request, context) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
+    def get_run_info(self, request, context) -> minknow_api.protocol_pb2.ProtocolRunInfo:
         run_id = request.run_id
 
         # If no run ID is provided, information about the most recently started protocol run is provided
@@ -440,24 +440,11 @@ class ProtocolService(minknow.rpc.protocol_pb2_grpc.ProtocolServiceServicer):
 
         return run.info
 
-    def set_sample_id(self, request, context):
-        """
-        Specify the sample identifier to set for the next protocol (deprecated)
-        """
-
-        warnings.warn('The sample_id should be set in the request when a protocol starts', DeprecationWarning)
-
-        self.sample_id = request.sample_id
-
-        LOGGER.debug('Sample ID: %s', self.sample_id)
-
-        return minknow.rpc.protocol_pb2.SetSampleIdResponse()
-
     def list_protocol_runs(self, request, context):
         """List previously started protocol run ids (including any current protocol), in order of starting."""
-        return minknow.rpc.protocol_pb2.ListProtocolRunsResponse(run_ids=self.run_ids)
+        return minknow_api.protocol_pb2.ListProtocolRunsResponse(run_ids=self.run_ids)
 
-    def wait_for_finished(self, request, context) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
+    def wait_for_finished(self, request, context) -> minknow_api.protocol_pb2.ProtocolRunInfo:
 
         run = Run(run_id=request.run_id, device=self.device)
         run.deserialise()

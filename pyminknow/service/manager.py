@@ -1,24 +1,27 @@
 import logging
 import warnings
 
-import minknow.rpc.manager_pb2
-import minknow.rpc.manager_pb2_grpc
+import minknow_api.manager_pb2
+import minknow_api.manager_pb2_grpc
 
 import pyminknow.config
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
+class ManagerService(minknow_api.manager_pb2_grpc.ManagerServiceServicer):
     """
     Manager service
 
     https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/manager.proto
     """
-    add_to_server = minknow.rpc.manager_pb2_grpc.add_ManagerServiceServicer_to_server
+    add_to_server = minknow_api.manager_pb2_grpc.add_ManagerServiceServicer_to_server
+
+    def get_version_info(self, request, context):
+        return minknow_api.manager_pb2.GetVersionInfoResponse()
 
     def describe_host(self, request, context):
-        return minknow.rpc.manager_pb2.DescribeHostResponse(
+        return minknow_api.manager_pb2.DescribeHostResponse(
             product_code=pyminknow.config.PRODUCT_CODE,
             description=pyminknow.config.DESCRIPTION,
             serial=pyminknow.config.SERIAL,
@@ -28,10 +31,10 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     @property
     def active_devices(self) -> list:
         return [
-            minknow.rpc.manager_pb2.ListDevicesResponse.ActiveDevice(
+            minknow_api.manager_pb2.ListDevicesResponse.ActiveDevice(
                 name=device['name'],
-                layout=minknow.rpc.manager_pb2.ListDevicesResponse.DeviceLayout(**device['layout']),
-                ports=minknow.rpc.manager_pb2.ListDevicesResponse.RpcPorts(
+                layout=minknow_api.manager_pb2.ListDevicesResponse.DeviceLayout(**device['layout']),
+                ports=minknow_api.manager_pb2.ListDevicesResponse.RpcPorts(
                     insecure_grpc=device['ports']['insecure'],
                     secure=device['ports']['secure'],
                 )
@@ -42,7 +45,7 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     def list_devices(self, request, context):
         warnings.warn('Use `flow_cell_positions` instead', DeprecationWarning)
 
-        return minknow.rpc.manager_pb2.ListDevicesResponse(
+        return minknow_api.manager_pb2.ListDevicesResponse(
             active=self.active_devices,
             inactive=list(),
             pending=list(),
@@ -53,7 +56,7 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
 
         positions = self._flow_cell_positions
 
-        yield minknow.rpc.manager_pb2.FlowCellPositionsResponse(
+        yield minknow_api.manager_pb2.FlowCellPositionsResponse(
             total_count=len(positions),
             positions=positions,
         )
@@ -61,14 +64,14 @@ class ManagerService(minknow.rpc.manager_pb2_grpc.ManagerServiceServicer):
     @property
     def _flow_cell_positions(self) -> list:
         state_name = 'STATE_RUNNING'
-        state = minknow.rpc.manager_pb2.FlowCellPosition.State.Value(state_name)
+        state = minknow_api.manager_pb2.FlowCellPosition.State.Value(state_name)
 
         return [
-            minknow.rpc.manager_pb2.FlowCellPosition(
+            minknow_api.manager_pb2.FlowCellPosition(
                 name=device['name'],
-                location=minknow.rpc.manager_pb2.FlowCellPosition.Location(**device['layout']),
+                location=minknow_api.manager_pb2.FlowCellPosition.Location(**device['layout']),
                 state=state,
-                rpc_ports=minknow.rpc.manager_pb2.FlowCellPosition.RpcPorts(**device['ports']),
+                rpc_ports=minknow_api.manager_pb2.FlowCellPosition.RpcPorts(**device['ports']),
                 error_info='',
             ) for device in pyminknow.config.DEVICES
         ]

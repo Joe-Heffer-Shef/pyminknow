@@ -1,7 +1,8 @@
 import unittest
 
-import pyminknow.client
 import pyminknow.config
+
+import minknow_api.manager
 
 
 class TestProtocolService(unittest.TestCase):
@@ -10,8 +11,7 @@ class TestProtocolService(unittest.TestCase):
     def setUp(self) -> None:
         """Initialise server"""
 
-        self.channel = pyminknow.client.connect()
-        self.client = pyminknow.client.ManagerClient(self.channel)
+        self.client = minknow_api.manager.Manager(use_tls=False)
 
     def test_describe_host(self):
         host = self.client.describe_host()
@@ -24,21 +24,8 @@ class TestProtocolService(unittest.TestCase):
     def test_flow_cell_positions(self):
         devices = {d['name']: d for d in pyminknow.config.DEVICES}
 
-        n_positions = 0
-        total_count = None
-        for response in self.client.flow_cell_positions():
-            total_count = response.total_count
+        for flow_cell_position in self.client.flow_cell_positions():
+            print(dir(flow_cell_position))
+            d = devices[flow_cell_position.name]
 
-            for position in response.positions:
-                d = devices[position.name]
-
-                self.assertEqual(position.rpc_ports.insecure, d['ports']['insecure'])
-
-                n_positions += 1
-
-        self.assertEqual(n_positions, total_count)
-        self.assertEqual(n_positions, len(devices))
-
-
-if __name__ == '__main__':
-    unittest.main()
+            self.assertEqual(flow_cell_position.rpc_ports.insecure, d['ports']['insecure'])

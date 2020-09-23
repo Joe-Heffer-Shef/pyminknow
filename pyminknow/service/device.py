@@ -1,17 +1,17 @@
 import logging
 import random
 
-import minknow.rpc.device_pb2
-import minknow.rpc.device_pb2_grpc
+import minknow_api.device_pb2
+import minknow_api.device_pb2_grpc
 
 LOGGER = logging.getLogger(__name__)
 
 
-class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
+class DeviceService(minknow_api.device_pb2_grpc.DeviceServiceServicer):
     """
     Device service
     """
-    add_to_server = minknow.rpc.device_pb2_grpc.add_DeviceServiceServicer_to_server
+    add_to_server = minknow_api.device_pb2_grpc.add_DeviceServiceServicer_to_server
 
     def __init__(self, *args, device: dict, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19,10 +19,10 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
 
     def get_device_state(self, request, context):
         # Pick a random state
-        possible_states = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState.keys()
+        possible_states = minknow_api.device_pb2.GetDeviceStateResponse.DeviceState.keys()
         device_state = random.choice(possible_states)
 
-        return minknow.rpc.device_pb2.GetDeviceStateResponse(device_state=device_state)
+        return minknow_api.device_pb2.GetDeviceStateResponse(device_state=device_state)
 
     @property
     def flow_cell(self):
@@ -46,11 +46,11 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
         else:
             data = dict(has_flow_cell=False)
 
-        return minknow.rpc.device_pb2.GetFlowCellInfoResponse(**data)
+        return minknow_api.device_pb2.GetFlowCellInfoResponse(**data)
 
     def get_device_info(self, request, context):
         # https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/device.proto#L109
-        return minknow.rpc.device_pb2.GetDeviceInfoResponse(
+        return minknow_api.device_pb2.GetDeviceInfoResponse(
             device_id='X1',
             device_type=2,  # GRIDION
             is_simulated=True,
@@ -59,7 +59,7 @@ class DeviceService(minknow.rpc.device_pb2_grpc.DeviceServiceServicer):
             can_set_temperature=True,
             digitisation=8192,
             location_defined=True,
-            firmware_version=[minknow.rpc.device_pb2.GetDeviceInfoResponse.ComponentVersion(
+            firmware_version=[minknow_api.device_pb2.GetDeviceInfoResponse.ComponentVersion(
                 component='GridION FPGA',
                 version='1.1.3',
             )],
