@@ -1,7 +1,7 @@
 FROM python:3.7-slim-buster
 
 LABEL maintainer="Joe Heffer <j.heffer@sheffield.ac.uk>" \
-version=0.0.3
+version=1.0.0
 
 # Create non-root user to run the daemon
 RUN useradd minknow --create-home
