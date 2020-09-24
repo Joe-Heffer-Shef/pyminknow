@@ -14,6 +14,7 @@ This code will emulate a [Oxford Nanopore Technologies](https://nanoporetech.com
 * [pyminknow](https://pypi.org/project/pyminknow/) at PyPi
 * [pyminknow](https://hub.docker.com/r/jheffer/pyminknow) at Docker Hub
 * [pyminknow](https://github.com/Joe-Heffer-Shef/pyminknow) at GitHub
+* [pyminknow](https://figshare.shef.ac.uk/articles/code/pyminknow/12357581) at FigShare
 
 # Installation
 
