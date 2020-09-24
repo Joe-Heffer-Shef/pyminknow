@@ -20,7 +20,9 @@ LOGGER = logging.getLogger(__name__)
 DESCRIPTION = """
 This is a client to test a Nanopore gene sequencing device by using its gRPC interface.
 
-Some commands are run against the manager (minKNOW) and some against a device (a mini
+You should use the minknow-api package if you can, because that's developed my Oxford Nanpore.
+
+Some commands are run against the manager (minKNOW) and some against a device.
 """
 
 USAGE = """
