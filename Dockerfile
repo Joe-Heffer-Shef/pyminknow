@@ -1,7 +1,6 @@
 FROM python:3.7-slim-buster
 
-LABEL maintainer="Joe Heffer <j.heffer@sheffield.ac.uk>" \
-version=1.0.0
+LABEL maintainer="Joe Heffer <j.heffer@sheffield.ac.uk>" version=1.0.2
 
 # Create non-root user to run the daemon
 RUN useradd minknow --create-home
@@ -21,7 +20,7 @@ ENV MINKNOW_DATA_DIR=/data
 RUN mkdir $MINKNOW_DATA_DIR && chown minknow:minknow $MINKNOW_DATA_DIR
 
 # Install Python packages
-RUN pip install pyminknow
+RUN pip install pyminknow==1.0.2
 
 RUN chown --recursive minknow:minknow /home/minknow
 USER minknow
