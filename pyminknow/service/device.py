@@ -35,7 +35,6 @@ class DeviceService(minknow_api.device_pb2_grpc.DeviceServiceServicer):
                 flow_cell_id=self.flow_cell['flow_cell_id'],
                 channel_count=512,
                 wells_per_channel=4,
-                asic_id=5287869,
                 product_code="FLO-MIN106",
                 user_specified_flow_cell_id="?",
                 user_specified_product_code='?',
@@ -58,7 +57,6 @@ class DeviceService(minknow_api.device_pb2_grpc.DeviceServiceServicer):
             max_wells_per_channel=4,
             can_set_temperature=True,
             digitisation=8192,
-            location_defined=True,
             firmware_version=[minknow_api.device_pb2.GetDeviceInfoResponse.ComponentVersion(
                 component='GridION FPGA',
                 version='1.1.3',

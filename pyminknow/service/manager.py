@@ -1,5 +1,4 @@
 import logging
-import warnings
 
 import minknow_api.manager_pb2
 import minknow_api.manager_pb2_grpc
@@ -26,29 +25,6 @@ class ManagerService(minknow_api.manager_pb2_grpc.ManagerServiceServicer):
             description=pyminknow.config.DESCRIPTION,
             serial=pyminknow.config.SERIAL,
             network_name=pyminknow.config.NETWORK_NAME,
-        )
-
-    @property
-    def active_devices(self) -> list:
-        return [
-            minknow_api.manager_pb2.ListDevicesResponse.ActiveDevice(
-                name=device['name'],
-                layout=minknow_api.manager_pb2.ListDevicesResponse.DeviceLayout(**device['layout']),
-                ports=minknow_api.manager_pb2.ListDevicesResponse.RpcPorts(
-                    insecure_grpc=device['ports']['insecure'],
-                    secure=device['ports']['secure'],
-                )
-            )
-            for device in pyminknow.config.DEVICES
-        ]
-
-    def list_devices(self, request, context):
-        warnings.warn('Use `flow_cell_positions` instead', DeprecationWarning)
-
-        return minknow_api.manager_pb2.ListDevicesResponse(
-            active=self.active_devices,
-            inactive=list(),
-            pending=list(),
         )
 
     def flow_cell_positions(self, request, context) -> iter:
