@@ -2,7 +2,7 @@ import unittest
 
 import pyminknow.config
 
-import minknow_api.manager
+import pyminknow.client
 
 
 class TestProtocolService(unittest.TestCase):
@@ -11,8 +11,8 @@ class TestProtocolService(unittest.TestCase):
     def setUp(self) -> None:
         """Initialise server"""
 
-        # Don't use SSL certificates
-        self.client = minknow_api.manager.Manager(use_tls=False)
+        self.channel = pyminknow.client.connect()
+        self.client = pyminknow.client.ManagerClient(self.channel)
 
     def test_describe_host(self):
         host = self.client.describe_host()
@@ -25,7 +25,8 @@ class TestProtocolService(unittest.TestCase):
     def test_flow_cell_positions(self):
         devices = {d['name']: d for d in pyminknow.config.DEVICES}
 
-        for flow_cell_position in self.client.flow_cell_positions():
-            d = devices[flow_cell_position.name]
+        for flow_cell_positions in self.client.flow_cell_positions():
+            for flow_cell_position in flow_cell_positions.positions:
+                d = devices[flow_cell_position.name]
 
-            self.assertEqual(flow_cell_position.description.rpc_ports.insecure, d['ports']['insecure'])
+                self.assertEqual(flow_cell_position.rpc_ports.insecure, d['ports']['insecure'])

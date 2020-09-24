@@ -1,18 +1,17 @@
 import argparse
 import logging
-import warnings
 
 import grpc
 import google.protobuf.wrappers_pb2
 
-import minknow.rpc.device_pb2
-import minknow.rpc.device_pb2_grpc
-import minknow.rpc.manager_pb2
-import minknow.rpc.manager_pb2_grpc
-import minknow.rpc.protocol_pb2
-import minknow.rpc.protocol_pb2_grpc
-import minknow.rpc.acquisition_pb2
-import minknow.rpc.acquisition_pb2_grpc
+import minknow_api.device_pb2
+import minknow_api.device_pb2_grpc
+import minknow_api.manager_pb2
+import minknow_api.manager_pb2_grpc
+import minknow_api.protocol_pb2
+import minknow_api.protocol_pb2_grpc
+import minknow_api.acquisition_pb2
+import minknow_api.acquisition_pb2_grpc
 
 import pyminknow.config
 
@@ -55,9 +54,9 @@ class RpcClient:
 
         # Map services to stubs
         stubs = dict(
-            device=minknow.rpc.device_pb2_grpc.DeviceServiceStub,
-            protocol=minknow.rpc.protocol_pb2_grpc.ProtocolServiceStub,
-            manager=minknow.rpc.manager_pb2_grpc.ManagerServiceStub,
+            device=minknow_api.device_pb2_grpc.DeviceServiceStub,
+            protocol=minknow_api.protocol_pb2_grpc.ProtocolServiceStub,
+            manager=minknow_api.manager_pb2_grpc.ManagerServiceStub,
         )
 
         Stub = stubs[service]
@@ -85,18 +84,12 @@ class ManagerClient(RpcClient):
 
     stub_name = 'manager'
 
-    def describe_host(self, **kwargs) -> minknow.rpc.manager_pb2.DescribeHostResponse:
-        request = minknow.rpc.manager_pb2.DescribeHostRequest()
+    def describe_host(self, **kwargs) -> minknow_api.manager_pb2.DescribeHostResponse:
+        request = minknow_api.manager_pb2.DescribeHostRequest()
         return self.stub.describe_host(request, **kwargs)
 
-    def list_devices(self, **kwargs):
-        warnings.warn('DEPRECATED: use `flow_cell_positions` instead', DeprecationWarning)
-
-        request = minknow.rpc.manager_pb2.ListDevicesRequest()
-        return self.stub.list_devices(request, **kwargs)
-
     def flow_cell_positions(self, **kwargs) -> iter:
-        request = minknow.rpc.manager_pb2.FlowCellPositionsRequest()
+        request = minknow_api.manager_pb2.FlowCellPositionsRequest()
         yield from self.stub.flow_cell_positions(request, **kwargs)
 
 
@@ -109,12 +102,12 @@ class ProtocolClient(RpcClient):
 
     stub_name = 'protocol'
 
-    def list_protocols(self) -> minknow.rpc.protocol_pb2.ListProtocolsResponse:
-        request = minknow.rpc.protocol_pb2.ListProtocolsRequest()
+    def list_protocols(self) -> minknow_api.protocol_pb2.ListProtocolsResponse:
+        request = minknow_api.protocol_pb2.ListProtocolsRequest()
         return self.stub.list_protocols(request)
 
     def start_protocol(self, identifier: str, user_info: dict = None,
-                       args: list = None) -> minknow.rpc.protocol_pb2.StartProtocolResponse:
+                       args: list = None) -> minknow_api.protocol_pb2.StartProtocolResponse:
         """
         :param identifier: Protocol ID
         :param user_info: User input describing the protocol (keys: protocol_group_id, sample_id)
@@ -125,12 +118,12 @@ class ProtocolClient(RpcClient):
         user_info = user_info or dict()
 
         # StringValue may be null
-        _user_info = minknow.rpc.protocol_pb2.ProtocolRunUserInfo(
+        _user_info = minknow_api.protocol_pb2.ProtocolRunUserInfo(
             protocol_group_id=google.protobuf.wrappers_pb2.StringValue(value=user_info.get('protocol_group_id')),
             sample_id=google.protobuf.wrappers_pb2.StringValue(value=user_info.get('sample_id')),
         )
 
-        request = minknow.rpc.protocol_pb2.StartProtocolRequest(
+        request = minknow_api.protocol_pb2.StartProtocolRequest(
             identifier=identifier,
             user_info=_user_info,
             args=args,
@@ -145,33 +138,27 @@ class ProtocolClient(RpcClient):
         data_action_on_stop:
           https://github.com/nanoporetech/minknow_lims_interface/blob/master/minknow/rpc/acquisition.proto#L260
         """
-        # >>> minknow.rpc.acquisition_pb2.StopRequest.DataAction.items()
+        # >>> minknow_api.acquisition_pb2.StopRequest.DataAction.items()
         # [('STOP_DEFAULT', 0), ('STOP_KEEP_ALL_DATA', 1), ('STOP_FINISH_PROCESSING', 2)]
-        request = minknow.rpc.protocol_pb2.StopProtocolRequest(data_action_on_stop=data_action_on_stop)
+        request = minknow_api.protocol_pb2.StopProtocolRequest(data_action_on_stop=data_action_on_stop)
         return self.stub.stop_protocol(request)
 
-    def set_sample_id(self, sample_id: str) -> minknow.rpc.protocol_pb2.SetSampleIdResponse:
-        warnings.warn('The sample_id should be set in the request when a protocol starts ( start_protocol() )',
-                      DeprecationWarning)
-        request = minknow.rpc.protocol_pb2.SetSampleIdRequest(sample_id=sample_id)
-        return self.stub.set_sample_id(request)
-
-    def list_protocol_runs(self) -> minknow.rpc.protocol_pb2.ListProtocolRunsResponse:
-        request = minknow.rpc.protocol_pb2.ListProtocolRunsRequest()
+    def list_protocol_runs(self) -> minknow_api.protocol_pb2.ListProtocolRunsResponse:
+        request = minknow_api.protocol_pb2.ListProtocolRunsRequest()
         return self.stub.list_protocol_runs(request)
 
     @property
     def latest_run_id(self) -> str:
         return next(iter(self.list_protocol_runs().run_ids))
 
-    def get_run_info(self, run_id: str = None) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
+    def get_run_info(self, run_id: str = None) -> minknow_api.protocol_pb2.ProtocolRunInfo:
         # If no run is specified, use the most recent one
-        request = minknow.rpc.protocol_pb2.GetRunInfoRequest(run_id=run_id or self.latest_run_id)
+        request = minknow_api.protocol_pb2.GetRunInfoRequest(run_id=run_id or self.latest_run_id)
         return self.stub.get_run_info(request)
 
     def wait_for_finished(self, run_id: str, state: int = 0,
-                          timeout: int = None) -> minknow.rpc.protocol_pb2.ProtocolRunInfo:
-        request = minknow.rpc.protocol_pb2.WaitForFinishedRequest(
+                          timeout: int = None) -> minknow_api.protocol_pb2.ProtocolRunInfo:
+        request = minknow_api.protocol_pb2.WaitForFinishedRequest(
             run_id=run_id,
             state=state,
             timeout=timeout,
@@ -188,23 +175,23 @@ class DeviceClient(RpcClient):
 
     stub_name = 'device'
 
-    def get_device_state(self) -> minknow.rpc.device_pb2.GetDeviceStateResponse:
-        request = minknow.rpc.device_pb2.GetDeviceStateRequest()
+    def get_device_state(self) -> minknow_api.device_pb2.GetDeviceStateResponse:
+        request = minknow_api.device_pb2.GetDeviceStateRequest()
         return self.stub.get_device_state(request)
 
     def get_device_state_name(self) -> str:
         """Get human-readable state"""
         response = self.get_device_state()
-        state_name = minknow.rpc.device_pb2.GetDeviceStateResponse.DeviceState.Name(response.device_state)
+        state_name = minknow_api.device_pb2.GetDeviceStateResponse.DeviceState.Name(response.device_state)
         LOGGER.debug("Device status: %s => '%s'", response.device_state, state_name)
         return state_name
 
-    def get_device_info(self) -> minknow.rpc.device_pb2.GetDeviceInfoResponse:
-        request = minknow.rpc.device_pb2.GetDeviceInfoRequest()
+    def get_device_info(self) -> minknow_api.device_pb2.GetDeviceInfoResponse:
+        request = minknow_api.device_pb2.GetDeviceInfoRequest()
         return self.stub.get_device_info(request)
 
-    def get_flow_cell_info(self) -> minknow.rpc.device_pb2.GetFlowCellInfoResponse:
-        request = minknow.rpc.device_pb2.GetFlowCellInfoRequest()
+    def get_flow_cell_info(self) -> minknow_api.device_pb2.GetFlowCellInfoResponse:
+        request = minknow_api.device_pb2.GetFlowCellInfoRequest()
         response = self.stub.get_flow_cell_info(request)
         LOGGER.debug("has_flow_cell: %s", response.has_flow_cell)
         return response
@@ -317,13 +304,7 @@ def main():
 
             client = ManagerClient(channel)
 
-            if args.list_devices:
-                response = client.list_devices()
-                LOGGER.info("Found %s active devices", len(response.active))
-                for device in response.active:
-                    print(device)
-
-            elif args.describe_host:
+            if args.describe_host:
                 response = client.describe_host()
                 print(response)
 

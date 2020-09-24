@@ -23,12 +23,6 @@ RUN mkdir $MINKNOW_DATA_DIR && chown minknow:minknow $MINKNOW_DATA_DIR
 # Install Python packages
 RUN pip install pyminknow
 
-# Compile gRPC modules
-COPY compile_grpc.sh .
-COPY minknow_lims_interface minknow_lims_interface
-RUN pwd && ls -l
-RUN sh compile_grpc.sh
-
 RUN chown --recursive minknow:minknow /home/minknow
 USER minknow
 

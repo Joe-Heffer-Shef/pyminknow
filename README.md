@@ -17,11 +17,9 @@ This code will emulate a [Oxford Nanopore Technologies](https://nanoporetech.com
 
 # Installation
 
-## Generating RPC code
-
-The script `compile_grpc.sh` contains the command to compile the protocol buffers and gRPC interface from the `.proto` files in the minKNOW submodule. (See this tutorial on generating Python code: gRPC Basics - Python [Generating client and server code](https://grpc.io/docs/tutorials/basic/python/#generating-client-and-server-code).)
-
-The service expects the Python modules for the gRPC interface to be in `pyminknow/minknow/rpc`.
+```bash
+$ pip install pyminknow
+```
 
 # Usage
 
@@ -41,6 +39,12 @@ You may use `client.py` to test the functionality of the server. To get help, ru
 $ python client.py --help
 ```
 
+Unit tests may be used to systematically test the server functionality.
+
+```bash
+$ python -m unittest
+```
+
 
 
 ## Container
@@ -56,11 +60,9 @@ $ docker exec -it --user root minit service ssh start
 
 ## Python
 
-You should do this inside a Python 3.7 virtual environment. Compile the gRPC modules, install packages and then run the service. 
+You should do this inside a Python 3.7 virtual environment. Install packages and then run the service. 
 
 ```bash
-# Compile gRPC modules
-$ sh compile_grpc.sh
 $ pip install pyminkow
 $ python -m pyminknow
 ```
