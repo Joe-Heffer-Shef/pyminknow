@@ -10,6 +10,9 @@ import setuptools
 with open('README.md') as file:
     readme = file.read()
 
+with open('requirements.txt') as file:
+    install_requires = file.read().strip().split()
+
 setuptools.setup(
     name='pyminknow',
     version='1.0.0',
@@ -26,9 +29,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=[
-        'grpcio~=1.27',
-        'protobuf~=3.11',
-        'grpcio-tools~=1.28',
-    ]
+    install_requires=install_requires,
 )
