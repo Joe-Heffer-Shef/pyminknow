@@ -10,12 +10,9 @@ import setuptools
 with open('README.md') as file:
     readme = file.read()
 
-with open('requirements.txt') as file:
-    install_requires = file.read().strip().split()
-
 setuptools.setup(
     name='pyminknow',
-    version='1.0.1',
+    version='1.0.2',
     author="Joe Heffer",
     author_email="j.heffer@sheffield.ac.uk",
     description="This service mimics a Nanopore minKNOW gene sequencing device by using its gRPC interface.",
@@ -29,5 +26,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=install_requires,
+    install_requires=[
+        'minknow-api~=4.0',
+    ],
 )
