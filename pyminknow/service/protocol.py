@@ -5,7 +5,6 @@ import pickle
 import time
 import uuid
 import json
-import warnings
 
 from collections import Iterable
 
@@ -14,6 +13,7 @@ import google.protobuf.wrappers_pb2
 
 import minknow_api.protocol_pb2
 import minknow_api.protocol_pb2_grpc
+import minknow_api.device_pb2
 import pyminknow.config
 
 LOGGER = logging.getLogger(__name__)
@@ -290,6 +290,16 @@ class Run:
             end_time=self.end_time,
             user_info=self.user_info,
             acquisition_run_ids=self.acquisition_run_ids,
+            flow_cell=minknow_api.device_pb2.GetFlowCellInfoResponse(
+                has_flow_cell=True,
+                flow_cell_id=self.flow_cell_id,
+                asic_id_str="2004156",
+                asic_version="IA02C",
+                channel_count=512,
+                user_specified_flow_cell_id=self.flow_cell_id,
+                user_specified_product_code="FLO-MIN106",
+                wells_per_channel=4,
+            )
         )
 
     @staticmethod
