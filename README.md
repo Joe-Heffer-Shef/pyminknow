@@ -54,7 +54,7 @@ The container is based on Debian Linux and uses Python 3.7 as defined in the `Do
 
 ```bash
 $ docker build --tag pyminknow:latest .
-$ docker run --name minit --publish 5901:5901 -publish 22:22 -d pyminknow:latest
+$ docker run --name minit --publish 5901:5901 --publish 22:22 -d pyminknow:latest
 # Start the SSH service
 $ docker exec -it --user root minit service ssh start
 ```
@@ -64,7 +64,7 @@ $ docker exec -it --user root minit service ssh start
 You should do this inside a Python 3.7 virtual environment. Install packages and then run the service. 
 
 ```bash
-$ pip install pyminkow
+$ pip install pyminknow
 $ python -m pyminknow
 ```
 
